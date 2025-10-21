@@ -149,7 +149,7 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
                     LinearLayout.LayoutParams.MATCH_PARENT
                 )
                 val img = dialogFullScreen?.findViewById<LottieAnimationView>(R.id.imageView3)
-                img?.setAnimation(R.raw.gifloading)
+                img?.setAnimation(R.raw.loading)
                 runCatching {
                     if (!activity.isFinishing && dialogFullScreen != null && dialogFullScreen?.isShowing == false) {
                         dialogFullScreen?.show()

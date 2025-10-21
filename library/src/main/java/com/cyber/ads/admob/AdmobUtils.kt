@@ -1222,7 +1222,7 @@ object AdmobUtils {
         dialogFullScreen?.window?.setBackgroundDrawable(Color.WHITE.toDrawable())
         dialogFullScreen?.window?.setLayout(MATCH_PARENT, MATCH_PARENT)
         val img = dialogFullScreen?.findViewById<LottieAnimationView>(R.id.imageView3)
-        img?.setAnimation(R.raw.gifloading)
+        img?.setAnimation(R.raw.loading)
         if (!activity.isFinishing) {
             dialogFullScreen?.show()
         }
