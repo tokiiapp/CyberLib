@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="LOADING">Bezig met laden...</string>
+    <string name="no_internet">Geen internet</string>
+    <string name="please_check_your_connection">Controleer uw verbinding en probeer het opnieuw</string>
+    <string name="cancel">Annuleren</string>
+    <string name="retry">Opnieuw proberen</string>
+</resources>

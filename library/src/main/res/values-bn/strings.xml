@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="LOADING">লোড হচ্ছে...</string>
+    <string name="no_internet">ইন্টারনেট নেই</string>
+    <string name="please_check_your_connection">আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন</string>
+    <string name="cancel">বাতিল করুন</string>
+    <string name="retry">আবার চেষ্টা করুন</string>
+</resources>

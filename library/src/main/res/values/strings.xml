@@ -1,0 +1,15 @@
+<resources>
+    <string name="test_admob_reward_inter_id" translatable="false">ca-app-pub-3940256099942544/5354046379</string>
+    <string name="monthly_pro" translatable="false">monthly_pro</string>
+    <string name="yearly_pro" translatable="false">fire_yearly</string>
+    <string name="trial_yearly_pro" translatable="false">trial_yearly_pro</string>
+    <string name="terms_url" translatable="false">"https://rikatech-hk.com/termsofuse.html?app=photo%20recovery&amp;store=RIKATECH%20LTD"</string>
+    <string name="privacy_url" translatable="false">https://rikatech-hk.com/privacy-policy.html?app=photo%20recovery&amp;store=RIKATECH%20LTD</string>
+
+    <string name="LOADING">Loading...</string>
+    <string name="no_internet">No Internet</string>
+    <string name="please_check_your_connection">Please check your connection and try again</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    <string name="can_t_open_the_browser">Can\'t open the browser</string>
+</resources>

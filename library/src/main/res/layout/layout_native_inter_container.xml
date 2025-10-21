@@ -1,0 +1,46 @@
+<com.cyber.ads.custom.NativeConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <FrameLayout
+        android:id="@+id/viewGroup"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <ImageView
+        android:id="@+id/ad_close"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_margin="@dimen/_28sdp"
+        android:src="@drawable/ic_ad_close"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#66828282"
+        app:cardCornerRadius="99dp"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/ad_close"
+        app:layout_constraintEnd_toEndOf="@+id/ad_close"
+        app:layout_constraintStart_toStartOf="@+id/ad_close"
+        app:layout_constraintTop_toTopOf="@+id/ad_close">
+
+        <TextView
+            android:id="@+id/ad_timer"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:gravity="center"
+            android:text="5"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:visibility="gone" />
+    </androidx.cardview.widget.CardView>
+</com.cyber.ads.custom.NativeConstraintLayout>

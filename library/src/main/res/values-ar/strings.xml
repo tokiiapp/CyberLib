@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="LOADING">تحميل...</string>
+    <string name="no_internet">لا يوجد إنترنت</string>
+    <string name="please_check_your_connection">يرجى التحقق من اتصالك وحاول مرة أخرى</string>
+    <string name="cancel">يلغي</string>
+    <string name="retry">إعادة المحاولة</string>
+</resources>

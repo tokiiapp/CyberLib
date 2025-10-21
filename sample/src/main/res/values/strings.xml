@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">Dino Ads</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="next">Next</string>
+    <string name="intro1">All in one</string>
+    <string name="intro2">Weather forecast</string>
+    <string name="intro3">Indoor &amp; Outdoor Temperature</string>
+    <string name="intro1_content">Weather forecast, Air quality, rainfall, wind…</string>
+    <string name="intro2_content">Always update accurate weather information</string>
+    <string name="intro3_content">Measure temperature with a smart thermometer</string>
+    <string name="privacy_policy">Privacy Policy</string>
+
+    <string name="best_choice">Best choice</string>
+    <string name="restore">Restore</string>
+    <string name="restore_data_intantly_easy">Restore Data Intantly &amp; Easy</string>
+    <string name="auto_renewal_per_month">Auto - renewal per month</string>
+    <string name="remove_ads">Remove ads</string>
+    <string name="auto_renewal_per_year">Auto - renewal per year</string>
+    <string name="yearly">Yearly</string>
+    <string name="start_free_trial">Start Free Trial</string>
+    <string name="term_of_use_new">Term of use</string>
+    <string name="term_of_use"><u>Term of use</u></string>
+    <string name="weekly">Weekly</string>
+    <string name="monthly">Monthly</string>
+    <string name="auto_renewal_per_week">Auto - renewal per week</string>
+    <string name="you_have_purchased">You have purchased</string>
+    <string name="no_active_subscription">No active subscription</string>
+    <string name="error">Error</string>
+    <string name="load_prices_failed">Load prices failed</string>
+    <string name="free_trial">Free trial %1$d %2$s</string>
+</resources>

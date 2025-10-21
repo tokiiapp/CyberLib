@@ -1,0 +1,48 @@
+[versions]
+adjustAndroidVersion = "5.2.0"
+agp = "8.4.0"
+gson = "2.11.0"
+installreferrer = "2.2"
+kotlin = "2.1.0"
+coreKtx = "1.13.1"
+appcompat = "1.7.0"
+lifecycleProcess = "2.8.7"
+lifecycleRuntimeKtxVersion = "2.8.7"
+lottieVersion = "6.4.0"
+material = "1.12.0"
+activity = "1.9.0"
+constraintlayout = "2.1.4"
+materialishProgress = "1.7"
+playServicesAds = "24.7.0"
+playServicesAdsIdentifier = "18.2.0"
+sdpAndroid = "1.1.1"
+shimmer = "0.5.0"
+userMessagingPlatform = "3.2.0"
+firebaseConfigKtx = "22.1.2"
+
+[libraries]
+adjust-android-v520 = { module = "com.adjust.sdk:adjust-android", version.ref = "adjustAndroidVersion" }
+adjust-android-webbridge-v520 = { module = "com.adjust.sdk:adjust-android-webbridge", version.ref = "adjustAndroidVersion" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycleProcess" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtxVersion" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+installreferrer = { module = "com.android.installreferrer:installreferrer", version.ref = "installreferrer" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+lottie-v640 = { module = "com.airbnb.android:lottie", version.ref = "lottieVersion" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+materialish-progress = { module = "com.pnikosis:materialish-progress", version.ref = "materialishProgress" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+play-services-ads-identifier = { module = "com.google.android.gms:play-services-ads-identifier", version.ref = "playServicesAdsIdentifier" }
+sdp-android = { module = "com.intuit.sdp:sdp-android", version.ref = "sdpAndroid" }
+shimmer = { module = "com.facebook.shimmer:shimmer", version.ref = "shimmer" }
+user-messaging-platform = { module = "com.google.android.ump:user-messaging-platform", version.ref = "userMessagingPlatform" }
+firebase-config-ktx = { group = "com.google.firebase", name = "firebase-config-ktx", version.ref = "firebaseConfigKtx" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+

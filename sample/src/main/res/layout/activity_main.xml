@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:paddingBottom="@dimen/_10sdp"
+        app:layout_constraintBottom_toTopOf="@id/dummyBottom"
+        app:layout_constraintTop_toBottomOf="@id/dummyTop">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/btnLoadShowBanner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Banner" />
+
+            <Button
+                android:id="@+id/btnLoadShowBannerCollap"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Banner Collap" />
+
+            <Button
+                android:id="@+id/btnLoadShowNativeBanner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Native Banner" />
+
+            <Button
+                android:id="@+id/btnLoadShowNativeCollapBanner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Native Collap Banner" />
+
+            <Button
+                android:id="@+id/btnLoadShowBannerTop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Banner TOP" />
+
+            <Button
+                android:id="@+id/btnLoadShowBannerCollapTop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Banner Collap TOP" />
+
+            <Button
+                android:id="@+id/btnLoadShowNativeCollapTop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Native Collap TOP" />
+
+            <Button
+                android:id="@+id/btnLoadShowNative"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Native" />
+
+            <Button
+                android:id="@+id/btnLoadShowInter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Inter" />
+
+            <Button
+                android:id="@+id/btnLoadShowInterWithNative"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Inter with Native" />
+
+            <Button
+                android:id="@+id/btnLoadAndShowReward"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="load and show Reward" />
+
+            <FrameLayout
+                android:id="@+id/flNative"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="16dp" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/dummyTop"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="#FF7043"
+        android:gravity="center"
+        android:text="Dummy Top"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/flBannerTop" />
+
+    <TextView
+        android:id="@+id/dummyBottom"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="#FF7043"
+        android:gravity="center"
+        android:text="Dummy Bottom"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@id/flBanner" />
+
+    <FrameLayout
+        android:id="@+id/flBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/flBannerTop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clNativeFull"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white"
+        android:visibility="gone"
+        tools:visibility="gone">
+
+        <FrameLayout
+            android:id="@+id/flNativeFull"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <ImageView
+            android:id="@+id/ad_close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="32dp"
+            android:src="@drawable/ic_ad_close"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/white" />
+
+        <TextView
+            android:id="@+id/ad_timer"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/bg_ad_timer"
+            android:gravity="center"
+            android:text="5"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="@+id/ad_close"
+            app:layout_constraintEnd_toEndOf="@+id/ad_close"
+            app:layout_constraintStart_toStartOf="@+id/ad_close"
+            app:layout_constraintTop_toTopOf="@+id/ad_close" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="LOADING">Yükleniyor...</string>
+    <string name="no_internet">İnternet yok</string>
+    <string name="please_check_your_connection">Lütfen bağlantınızı kontrol edin ve tekrar deneyin</string>
+    <string name="cancel">İptal etmek</string>
+    <string name="retry">Tekrar dene</string>
+</resources>

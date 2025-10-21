@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="LOADING">Carregando...</string>
+    <string name="no_internet">Sem Internet</string>
+    <string name="please_check_your_connection">Por favor, verifique sua conexão e tente novamente</string>
+    <string name="cancel">Cancelar</string>
+    <string name="retry">Tentar novamente</string>
+</resources>

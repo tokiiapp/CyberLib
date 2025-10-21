@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:background="?attr/selectableItemBackground"
+    android:backgroundTint="#252525"
+    android:gravity="center"
+    android:orientation="horizontal">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/ivFlag"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginVertical="16dp"
+        android:layout_marginStart="16dp"
+        android:src="@drawable/english" />
+
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        android:textSize="16sp"
+        tools:text="German" />
+
+    <RadioButton
+        android:id="@+id/rbCheck"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp" />
+
+</androidx.appcompat.widget.LinearLayoutCompat>
