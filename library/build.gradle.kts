@@ -1,10 +1,9 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("maven-publish")
 }
 
-val libVersion = "1.5.3.3"
+val libVersion = "1.0.0"
 android {
     namespace = "com.cyber.ads"
     compileSdk = 35
