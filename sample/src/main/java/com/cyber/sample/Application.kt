@@ -14,7 +14,7 @@ class Application : AdsApplication(), ActivityLifecycleCallbacks {
         registerActivityLifecycleCallbacks(this)
         SolarUtils.init(
             context = this,
-            appKey = "afbdf8ebc696df7f",
+            appKey = "key",
             debug = true
         )
         SolarUtils.setDebugPolicy(
