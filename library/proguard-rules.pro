@@ -9,6 +9,7 @@
  }
 -keep class com.cyber.ads.admob.RemoteUtils { *; }
 -keep class com.cyber.ads.adjust.AdjustUtils { *; }
+-keep class com.cyber.ads.solar.SolarUtils { *; }
 -keep class com.cyber.ads.application.AdsApplication { *; }
 -keep class com.cyber.ads.remote.** { *; }
 -keep class com.cyber.ads.admob.OnResumeUtils { *; }
