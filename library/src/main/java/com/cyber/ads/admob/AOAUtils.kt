@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.View
 import android.view.Window
@@ -15,6 +16,7 @@ import com.airbnb.lottie.LottieAnimationView
 import com.cyber.ads.R
 import com.cyber.ads.adjust.AdjustUtils
 import com.cyber.ads.remote.SplashHolder
+import com.cyber.ads.solar.SolarUtils
 import com.cyber.ads.utils.Helper
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
@@ -39,6 +41,8 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
 
     private val isAdAvailable: Boolean
         get() = appOpenAd != null
+
+    private fun nowMs() = SystemClock.elapsedRealtime()
 
     fun loadAndShowAoa() {
         if (AdmobUtils.isPremium) {
@@ -84,11 +88,20 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
         }
 
         val adId = adIds[index]
+        val loadStart = nowMs()
         log("Loading AOA... $adId")
         AppOpenAd.load(activity, adId, adRequest, object : AppOpenAd.AppOpenAdLoadCallback() {
             override fun onAdFailedToLoad(p0: LoadAdError) {
                 super.onAdFailedToLoad(p0)
                 logE("onAdFailedToLoad ${p0.message} - ${p0.cause}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = "app_open",
+                    loadAdError = p0,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
                 loadAoa(job, index + 1)
             }
 
@@ -165,6 +178,11 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
                         }
                         setOnPaidEventListener {
                             AdjustUtils.postRevenueAdjust(activity, it, adUnitId)
+                            SolarUtils.trackAdImpression(
+                                ad = it,
+                                adUnit = adUnitId,
+                                format = "app_open"
+                            )
                         }
                         show(activity)
                     } else {

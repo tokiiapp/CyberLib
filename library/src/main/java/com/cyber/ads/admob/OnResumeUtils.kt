@@ -21,6 +21,7 @@ import com.cyber.ads.R
 import com.cyber.ads.adjust.AdjustUtils
 import com.cyber.ads.admob.AdmobUtils.dismissAdDialog
 import com.cyber.ads.remote.APP_OPEN_TEST_ID
+import com.cyber.ads.solar.SolarUtils
 import com.cyber.ads.utils.Helper
 import com.cyber.ads.utils.Helper.enableOnResume
 import com.cyber.ads.utils.Helper.onResumeId
@@ -134,6 +135,11 @@ object OnResumeUtils : ActivityLifecycleCallbacks, DefaultLifecycleObserver {
                 appResumeLoadTime = (Date()).time
                 ad.setOnPaidEventListener {
                     AdjustUtils.postRevenueAdjust(myApplication!!, it, appResumeAdId)
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = appResumeAdId,
+                        format = "app_open"
+                    )
                 }
             }
 

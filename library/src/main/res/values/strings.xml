@@ -1,5 +1,8 @@
 <resources>
     <string name="test_admob_reward_inter_id" translatable="false">ca-app-pub-3940256099942544/5354046379</string>
+    <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544/5354046379</string>
+    <string name="facebook_id" translatable="false">xxxxx</string>
+    <string name="facebook_id_token" translatable="false">xxxxxx</string>
     <string name="monthly_pro" translatable="false">monthly_pro</string>
     <string name="yearly_pro" translatable="false">fire_yearly</string>
     <string name="trial_yearly_pro" translatable="false">trial_yearly_pro</string>

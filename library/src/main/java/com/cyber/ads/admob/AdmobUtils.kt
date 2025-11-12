@@ -8,6 +8,7 @@ import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Gravity
@@ -41,6 +42,7 @@ import com.cyber.ads.remote.NativeHolder
 import com.cyber.ads.remote.NativeMultiHolder
 import com.cyber.ads.remote.RewardHolder
 import com.cyber.ads.remote.SplashHolder
+import com.cyber.ads.solar.SolarUtils
 import com.cyber.ads.utils.Helper
 import com.cyber.ads.utils.Helper.parseUnitIds
 import com.cyber.ads.utils.dpToPx
@@ -106,6 +108,7 @@ object AdmobUtils {
     @JvmField
     var mBannerCollapView: AdView? = null
     var mRewardedAd: RewardedAd? = null
+    var isEarned = false
 
     //    var mRewardedInterstitialAd: RewardedInterstitialAd? = null
     var mInterstitialAd: InterstitialAd? = null
@@ -113,6 +116,16 @@ object AdmobUtils {
     private var adRequest: AdRequest? = null
     private var refreshJob: Job? = null
     private var splashSuccess = false
+    private fun nowMs() = SystemClock.elapsedRealtime()
+
+    private fun formatNameForSolar(raw: String): String = when (raw.lowercase()) {
+        "inter", "interstitial" -> "interstitial"
+        "reward", "rewarded", "rewarded_interstitial" -> "rewarded"
+        "banner", "adaptive_banner", "mrec" -> "banner"
+        "native", "native_advanced" -> "native"
+        "app_open", "splash" -> "app_open"
+        else -> raw.lowercase()
+    }
 
     @JvmStatic
     fun setupCMP(activity: Activity, onCompleted: () -> Unit) {
@@ -940,6 +953,7 @@ object AdmobUtils {
 
         val adId = adIds[index]
         log("Loading Inter: ${holder.key}/$adId")
+        val loadStart = nowMs()
         InterstitialAd.load(context, adId, adRequest!!, object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(interstitialAd: InterstitialAd) {
                 log("InterLoaded")
@@ -947,12 +961,25 @@ object AdmobUtils {
                 holder.isInterLoading = false
                 interstitialAd.setOnPaidEventListener {
                     AdjustUtils.postRevenueAdjust(context, it, interstitialAd.adUnitId)
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = interstitialAd.adUnitId,
+                        format = "interstitial"
+                    )
                 }
                 callback.onInterLoaded(interstitialAd, false)
             }
 
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                 logE("InterLoadFailed: ${loadAdError.message}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("interstitial"),
+                    loadAdError = loadAdError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
                 tryLoadInter(context, holder, callback, index + 1)
             }
         })
@@ -1142,6 +1169,7 @@ object AdmobUtils {
 
         val adId = adIds[index]
         log("Loading Inter ${holder.key}/$adId")
+        val loadStart = nowMs()
         InterstitialAd.load(activity, adId, adRequest!!, object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(interstitialAd: InterstitialAd) {
                 super.onAdLoaded(interstitialAd)
@@ -1150,12 +1178,17 @@ object AdmobUtils {
                 callback.onInterLoaded()
                 Handler(Looper.getMainLooper()).postDelayed({
                     mInterstitialAd = interstitialAd
-                    mInterstitialAd!!.onPaidEventListener = OnPaidEventListener { adValue: AdValue? ->
+                    mInterstitialAd?.onPaidEventListener = OnPaidEventListener { adValue: AdValue? ->
                         adValue?.let {
                             AdjustUtils.postRevenueAdjust(activity, it, interstitialAd.adUnitId)
+                            SolarUtils.trackAdImpression(
+                                ad = adValue,
+                                adUnit = interstitialAd.adUnitId,
+                                format = "interstitial"
+                            )
                         }
                     }
-                    mInterstitialAd!!.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                             logE("InterFailedToShowFullScreen" + adError.message)
                             callback.onInterFailed(adError.message)
@@ -1206,6 +1239,14 @@ object AdmobUtils {
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                 super.onAdFailedToLoad(loadAdError)
                 logE("InterFailed: ${loadAdError.message}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("interstitial"),
+                    loadAdError = loadAdError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
                 tryLoadAndShowInter(activity, holder, callback, index + 1)
             }
         })
@@ -1275,6 +1316,7 @@ object AdmobUtils {
         }
 
         val adId = adIds[index]
+        val loadStart = nowMs()
         val mAdView = AdView(activity).apply {
             adUnitId = adId
             val adSize = getBannerSize(activity)
@@ -1284,6 +1326,11 @@ object AdmobUtils {
                     log("Banner Loaded")
                     onPaidEventListener = OnPaidEventListener { adValue ->
                         AdjustUtils.postRevenueAdjust(activity, adValue, adUnitId)
+                        SolarUtils.trackAdImpression(
+                            ad = adValue,
+                            adUnit = adUnitId,
+                            format = "banner"
+                        )
                     }
                     shimmerFrameLayout?.stopShimmer()
                     viewGroup.removeAllViews()
@@ -1295,8 +1342,16 @@ object AdmobUtils {
                     }
                 }
 
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    logE("BannerFailed: ${error.message}")
+                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    logE("BannerFailed: ${loadAdError.message}")
+                    val latency = nowMs() - loadStart
+                    SolarUtils.trackAdLoadFailure(
+                        adUnit = adId,
+                        format = formatNameForSolar("banner"),
+                        loadAdError = loadAdError,
+                        latencyMs = latency,
+                        waterfallIndex = index
+                    )
                     tryLoadAndShowBanner(activity, holder, viewGroup, callback, index + 1)
                 }
             }
@@ -1359,13 +1414,18 @@ object AdmobUtils {
             this.adUnitId = adId
             setAdSize(adSize)
         }
-
+        val loadStart = nowMs()
         mBannerCollapView = adView
         adView.adListener = object : AdListener() {
             override fun onAdLoaded() {
                 log("BannerCollap Loaded")
                 adView.onPaidEventListener = OnPaidEventListener { adValue ->
                     AdjustUtils.postRevenueAdjust(activity, adValue, adView.adUnitId)
+                    SolarUtils.trackAdImpression(
+                        ad = adValue,
+                        adUnit = adView.adUnitId,
+                        format = "banner"
+                    )
                 }
                 shimmerFrameLayout?.stopShimmer()
                 viewGroup.removeAllViews()
@@ -1381,6 +1441,14 @@ object AdmobUtils {
 
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 logE("BannerCollapFailedToLoad: ${adError.message}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("banner"),
+                    loadAdError = adError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
                 tryLoadBannerCollap(activity, holder, viewGroup, callback, index + 1)
             }
 
@@ -1475,10 +1543,20 @@ object AdmobUtils {
         }
 
         val adId = adIds[index]
+        val loadStart = nowMs()
         log("Loading Reward: ${holder.key}/$adId")
         RewardedAd.load(activity, adId, adRequest!!, object : RewardedAdLoadCallback() {
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                 logE("RewardFailed: ${loadAdError.message}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("reward"),
+                    loadAdError = loadAdError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
+                isEarned = false
                 tryLoadReward(activity, holder, callback, index + 1)
             }
 
@@ -1487,6 +1565,11 @@ object AdmobUtils {
                 mRewardedAd = rewardedAd
                 mRewardedAd?.setOnPaidEventListener {
                     AdjustUtils.postRevenueAdjust(activity, it, rewardedAd.adUnitId)
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = rewardedAd.adUnitId,
+                        format = "rewarded"
+                    )
                 }
                 mRewardedAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdShowedFullScreenContent() {
@@ -1498,6 +1581,7 @@ object AdmobUtils {
                     override fun onAdFailedToShowFullScreenContent(adError: AdError) {
 //                        if (adError.code != 1) {
                         isAdShowing = false
+                        isEarned = false
                         callback.onRewardFailed(adError.message)
                         mRewardedAd = null
                         dismissAdDialog()
@@ -1518,6 +1602,7 @@ object AdmobUtils {
                     OnResumeUtils.setEnableOnResume(false)
                     mRewardedAd?.show(activity) {
                         mRewardedAd = null
+                        isEarned = true
                         callback.onRewardEarned()
                     }
                     isAdShowing = true
@@ -1566,6 +1651,7 @@ object AdmobUtils {
         }
 
         val adId = adIds[index]
+        val loadStart = nowMs()
         val adLoader = AdLoader.Builder(context, adId).forNativeAd { nativeAd ->
             log("Native Loaded")
             holder.isNativeLoading = false
@@ -1573,6 +1659,11 @@ object AdmobUtils {
             nativeAd.setOnPaidEventListener { adValue: AdValue? ->
                 adValue?.let {
                     AdjustUtils.postRevenueAdjust(context, adValue, adId)
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = adId,
+                        format = "native"
+                    )
                 }
             }
             aggregateErr(nativeAd)
@@ -1581,6 +1672,14 @@ object AdmobUtils {
         }.withAdListener(object : AdListener() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 logE("NativeFailedToLoad: ${adError.message}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("native"),
+                    loadAdError = adError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
                 tryLoadNative(context, holder, callback, index + 1)
             }
 
@@ -1639,6 +1738,11 @@ object AdmobUtils {
                 if (nativeAd != null) {
                     nativeAd.setOnPaidEventListener {
                         AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
+                        SolarUtils.trackAdImpression(
+                            ad = it,
+                            adUnit = holder.currentAdId,
+                            format = "native"
+                        )
                     }
                     val adView = activity.layoutInflater.inflate(layoutId, null) as NativeAdView
                     populateNativeAdView(nativeAd, adView)
@@ -1725,6 +1829,7 @@ object AdmobUtils {
         }
 
         val adId = adIds[index]
+        val loadStart = nowMs()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("Native Loaded")
             callback.onNativeReady(nativeAd)
@@ -1734,6 +1839,11 @@ object AdmobUtils {
             populateNativeAdView(nativeAd, adView)
             nativeAd.setOnPaidEventListener { adValue: AdValue ->
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
+                SolarUtils.trackAdImpression(
+                    ad = adValue,
+                    adUnit = adId,
+                    format = "native"
+                )
             }
 
             aggregateErr(nativeAd)
@@ -1747,6 +1857,14 @@ object AdmobUtils {
         }.withAdListener(object : AdListener() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 logE("NativeFailedToLoad ${adError.message} - ${adError.cause}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("native"),
+                    loadAdError = adError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
                 tryLoadAndShowNative(activity, holder, viewGroup, callback, index + 1)
             }
 
@@ -1805,6 +1923,7 @@ object AdmobUtils {
         }
 
         val adId = adIds[index]
+        val loadStart = nowMs()
         val decorView = activity.window.decorView as ViewGroup
         val tag = "native_collap_view"
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
@@ -1814,6 +1933,11 @@ object AdmobUtils {
             adViewCollap.tag = tag
             nativeAd.setOnPaidEventListener { adValue: AdValue ->
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
+                SolarUtils.trackAdImpression(
+                    ad = adValue,
+                    adUnit = adId,
+                    format = "native"
+                )
             }
             aggregateErr(nativeAd)
             populateNativeAdViewCollap(nativeAd, adViewCollap, holder.anchor) {
@@ -1862,6 +1986,14 @@ object AdmobUtils {
         }.withAdListener(object : AdListener() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 logE("NativeCollapFailedToLoad ${adError.message} - ${adError.cause}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("native"),
+                    loadAdError = adError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
                 tryLoadAndShowNativeCollap(activity, holder, viewGroup, callback, index + 1)
             }
 
@@ -1915,12 +2047,18 @@ object AdmobUtils {
         }
 
         val adId = adIds[index]
+        val loadStart = nowMs()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("NativeFull Loaded")
             val adView = activity.layoutInflater.inflate(R.layout.native_template_full, null) as NativeAdView
             aggregateErr(nativeAd)
             nativeAd.setOnPaidEventListener {
                 AdjustUtils.postRevenueAdjust(activity, it, adId)
+                SolarUtils.trackAdImpression(
+                    ad = it,
+                    adUnit = adId,
+                    format = "native"
+                )
             }
             callback.onNativeLoaded()
             populateNativeAdViewFull(nativeAd, adView)
@@ -1931,6 +2069,14 @@ object AdmobUtils {
         }.withAdListener(object : AdListener() {
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                 logE("NativeFullFailedToLoad ${loadAdError.message} - ${loadAdError.cause}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("native"),
+                    loadAdError = loadAdError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
                 tryLoadAndShowNativeFull(activity, holder, viewGroup, callback, index + 1)
             }
         }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
@@ -1971,6 +2117,7 @@ object AdmobUtils {
         }
 
         val adId = adIds[index]
+        val loadStart = nowMs()
         holder.isNativeLoading = true
         val adLoader = AdLoader.Builder(context, adId)
             .withNativeAdOptions(NativeAdOptions.Builder().build())
@@ -1981,6 +2128,11 @@ object AdmobUtils {
                 holder.currentAdId = adId
                 nativeAd.setOnPaidEventListener {
                     AdjustUtils.postRevenueAdjust(context, it, adId)
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = adId,
+                        format = "native"
+                    )
                 }
                 aggregateErr(nativeAd)
                 callback.onNativeReady(nativeAd)
@@ -1992,6 +2144,14 @@ object AdmobUtils {
 
                 override fun onAdFailedToLoad(adError: LoadAdError) {
                     logE("NativeFullFailedToLoad ${adError.message} - ${adError.cause}")
+                    val latency = nowMs() - loadStart
+                    SolarUtils.trackAdLoadFailure(
+                        adUnit = adId,
+                        format = formatNameForSolar("native"),
+                        loadAdError = adError,
+                        latencyMs = latency,
+                        waterfallIndex = index
+                    )
                     tryLoadNativeFull(context, holder, callback, index + 1)
                 }
             })
@@ -2040,6 +2200,11 @@ object AdmobUtils {
                 if (nativeAd != null) {
                     nativeAd.setOnPaidEventListener {
                         AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
+                        SolarUtils.trackAdImpression(
+                            ad = it,
+                            adUnit = holder.currentAdId,
+                            format = "native"
+                        )
                     }
                     val adView = inflater.inflate(layout, null) as NativeAdView
                     populateNativeAdViewFull(nativeAd, adView)

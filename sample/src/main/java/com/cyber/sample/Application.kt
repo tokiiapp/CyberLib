@@ -6,12 +6,22 @@ import android.os.Bundle
 import android.view.View
 import com.cyber.ads.adjust.AdjustUtils
 import com.cyber.ads.application.AdsApplication
+import com.cyber.ads.solar.SolarUtils
 
 class Application : AdsApplication(), ActivityLifecycleCallbacks {
     override fun onCreateApplication() {
         AdjustUtils.initAdjust(this, "", false)
         registerActivityLifecycleCallbacks(this)
-
+        SolarUtils.init(
+            context = this,
+            appKey = "afbdf8ebc696df7f",
+            debug = true
+        )
+        SolarUtils.setDebugPolicy(
+            enableDebugSend = true,
+            debugChannel = "debug",
+            includeZeroRevenue = true
+        )
     }
 
 //    override fun onTrimMemory(level: Int) {

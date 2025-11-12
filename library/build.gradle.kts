@@ -61,9 +61,9 @@ dependencies {
     implementation(libs.firebase.config.ktx)
     implementation("com.google.firebase:firebase-analytics:23.0.0")
     api("com.facebook.android:facebook-android-sdk:18.1.3")
-    api("com.google.ads.mediation:applovin:13.4.0.0")
-    api("com.google.ads.mediation:facebook:6.20.0.1")
     //iap
     implementation("com.android.billingclient:billing-ktx:8.0.0")
+    //solar
+    implementation("com.reyun.solar.engine.oversea:solar-engine-core:1.3.1.1")
 }
 
