@@ -18,3 +18,23 @@
 -keep class com.android.billingclient.** { *; }
 -keep public class com.cyber.ads.iap.** { public *; }
 -dontwarn com.android.billingclient.**
+#solar
+-keep class com.se.** {*; }
+-keep class route.**{*;}
+-keep interface com.se.** {*; }
+-keep interface route.**{*;}
+-dontwarn com.se.**
+-dontwarn org.json.**
+-keep class org.json.**{*;}
+# Google lib
+-keep class com.google.android.gms.ads.identifier.AdvertisingIdClient {
+    com.google.android.gms.ads.identifier.AdvertisingIdClient$Info getAdvertisingIdInfo(android.content.Context);
+}
+-keep class com.google.android.gms.ads.identifier.AdvertisingIdClient$Info {
+    java.lang.String getId();
+    boolean isLimitAdTrackingEnabled();
+}
+-keep public class com.android.installreferrer.** { *; }
+# If the OAID plugin is used, please add the following obfuscation strategy:
+-keep class com.huawei.hms.**{*;}
+-keep class com.hihonor.**{*;}
