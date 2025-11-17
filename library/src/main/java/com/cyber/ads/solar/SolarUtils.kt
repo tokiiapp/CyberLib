@@ -23,9 +23,9 @@ object SolarUtils {
 
     private val isInitialized = AtomicBoolean(false)
 
-    private var isDebugSolar: Boolean = true
+    private var isDebugSolar: Boolean = false
     private var currentChannel: String = "googleplay"
-    private var includeZeroRevenueInDebug: Boolean = false
+    private var includeZeroRevenueInDebug: Boolean = true
 
     @JvmField
     var userId: String? = null
@@ -74,7 +74,7 @@ object SolarUtils {
                     appId = context.getString(R.string.admob_app_id) ?: context.packageName
 
                     userId = SolarEngineManager.getInstance().distinctId
-                    Log.d(TAG, "SolarEngine initialized (debug=$debug, channel=$currentChannel)")
+                    Log.e(TAG, "SolarEngine initialized (debug=$debug, channel=$currentChannel)")
                 } else {
                     Log.e(TAG, "SolarEngine init failed, code=$code")
                 }
@@ -146,7 +146,7 @@ object SolarUtils {
             val micros = ad.valueMicros
             val isZeroRevenue = micros <= 0
             if (isZeroRevenue && !(isDebugSolar && includeZeroRevenueInDebug)) {
-                Log.d(TAG, "Skip Solar ad impression: valueMicros=$micros (debug=$isDebugSolar)")
+                Log.e(TAG, "Skip Solar ad impression: valueMicros=$micros (debug=$isDebugSolar)")
                 return
             }
 
@@ -179,7 +179,7 @@ object SolarUtils {
             )
 
             SolarEngineManager.getInstance().trackAdImpression(event)
-            Log.d(
+            Log.e(
                 TAG,
                 "Solar ad imp tracked: unit=${adUnit.orEmpty()}, fmt=${format.lowercase()}, ecpm=${
                     "%.6f".format(
@@ -245,7 +245,7 @@ object SolarUtils {
                 if (userId != null && !has("user_id")) put("user_id", userId)
             }
             SolarEngineManager.getInstance().track(eventName, payload)
-            Log.d(TAG, "Solar custom event: $eventName (debug=$isDebugSolar)")
+            Log.e(TAG, "Solar custom event: $eventName (debug=$isDebugSolar)")
         }.onFailure { e ->
             Log.e(TAG, "Failed to track Solar event: $eventName", e)
         }
@@ -299,7 +299,7 @@ object SolarUtils {
                 if (extras != null) mergeJson(this, extras)
             }
             SolarEngineManager.getInstance().track("ad_load_failed", props)
-            Log.d(
+            Log.e(
                 TAG,
                 "Solar track ad_load_failed: unit=${adUnit.orEmpty()}, fmt=$format, code=$errorCode"
             )
@@ -336,7 +336,7 @@ object SolarUtils {
                 if (extras != null) mergeJson(this, extras)
             }
             SolarEngineManager.getInstance().track("ad_show_failed", props)
-            Log.d(
+            Log.e(
                 TAG,
                 "Solar track ad_show_failed: unit=${adUnit.orEmpty()}, fmt=$format, code=$errorCode"
             )

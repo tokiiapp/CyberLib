@@ -182,7 +182,8 @@ object Helper {
                                 lowerRef.contains("gbraid=") ||
                                 lowerRef.contains("gad_source=") ||
                                 lowerRef.contains("apps.facebook.com") ||
-                                lowerRef.contains("apps.instagram.com")
+                                lowerRef.contains("apps.instagram.com")||
+                                lowerRef.contains("solarengine")
                             ) {
                                 context.prefs().edit { putBoolean("ads_ref_event", false) }
                                 FirebaseAnalytics.getInstance(context).logEvent("ads_ref_true", null)
