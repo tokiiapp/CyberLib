@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.cyber.ads.R
 import com.cyber.ads.adjust.AdjustUtils
+import com.cyber.ads.utils.logE
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdValue
 import com.google.android.gms.ads.LoadAdError
@@ -72,7 +73,7 @@ object SolarUtils {
                 if (code == 0) {
                     isInitialized.set(true)
                     appId = context.getString(R.string.admob_app_id) ?: context.packageName
-
+                    Log.e(TAG, "SolarEngine admob_app_id: " + context.getString(R.string.admob_app_id))
                     userId = SolarEngineManager.getInstance().distinctId
                     Log.e(TAG, "SolarEngine initialized (debug=$debug, channel=$currentChannel)")
                 } else {
@@ -141,7 +142,7 @@ object SolarUtils {
         customProperties: JSONObject? = null
     ) {
         if (!ensureInitialized()) return
-
+        logE("trackAdImpression")
         runCatching {
             val micros = ad.valueMicros
             val isZeroRevenue = micros <= 0

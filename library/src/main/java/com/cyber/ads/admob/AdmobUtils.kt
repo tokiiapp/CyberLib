@@ -961,6 +961,7 @@ object AdmobUtils {
                 holder.isInterLoading = false
                 interstitialAd.setOnPaidEventListener {
                     AdjustUtils.postRevenueAdjust(context, it, interstitialAd.adUnitId)
+                    logE( "onPaidEventListener: inter ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = interstitialAd.adUnitId,
@@ -1181,6 +1182,7 @@ object AdmobUtils {
                     mInterstitialAd?.onPaidEventListener = OnPaidEventListener { adValue: AdValue? ->
                         adValue?.let {
                             AdjustUtils.postRevenueAdjust(activity, it, interstitialAd.adUnitId)
+                            logE( "onPaidEventListener: inter ")
                             SolarUtils.trackAdImpression(
                                 ad = adValue,
                                 adUnit = interstitialAd.adUnitId,
@@ -1326,6 +1328,7 @@ object AdmobUtils {
                     log("Banner Loaded")
                     onPaidEventListener = OnPaidEventListener { adValue ->
                         AdjustUtils.postRevenueAdjust(activity, adValue, adUnitId)
+                        logE( "onPaidEventListener: banner ")
                         SolarUtils.trackAdImpression(
                             ad = adValue,
                             adUnit = adUnitId,
@@ -1421,6 +1424,7 @@ object AdmobUtils {
                 log("BannerCollap Loaded")
                 adView.onPaidEventListener = OnPaidEventListener { adValue ->
                     AdjustUtils.postRevenueAdjust(activity, adValue, adView.adUnitId)
+                    logE( "onPaidEventListener: banner ")
                     SolarUtils.trackAdImpression(
                         ad = adValue,
                         adUnit = adView.adUnitId,
@@ -1565,6 +1569,7 @@ object AdmobUtils {
                 mRewardedAd = rewardedAd
                 mRewardedAd?.setOnPaidEventListener {
                     AdjustUtils.postRevenueAdjust(activity, it, rewardedAd.adUnitId)
+                    logE( "onPaidEventListener: reward ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = rewardedAd.adUnitId,
@@ -1659,6 +1664,7 @@ object AdmobUtils {
             nativeAd.setOnPaidEventListener { adValue: AdValue? ->
                 adValue?.let {
                     AdjustUtils.postRevenueAdjust(context, adValue, adId)
+                    logE( "onPaidEventListener: native ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = adId,
@@ -1737,6 +1743,7 @@ object AdmobUtils {
             holder.nativeAd.observe((activity as LifecycleOwner)) { nativeAd ->
                 if (nativeAd != null) {
                     nativeAd.setOnPaidEventListener {
+                        logE( "onPaidEventListener: native ")
                         AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
                         SolarUtils.trackAdImpression(
                             ad = it,
@@ -1839,6 +1846,7 @@ object AdmobUtils {
             populateNativeAdView(nativeAd, adView)
             nativeAd.setOnPaidEventListener { adValue: AdValue ->
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
+                logE( "onPaidEventListener: native ")
                 SolarUtils.trackAdImpression(
                     ad = adValue,
                     adUnit = adId,
@@ -1933,6 +1941,7 @@ object AdmobUtils {
             adViewCollap.tag = tag
             nativeAd.setOnPaidEventListener { adValue: AdValue ->
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
+                logE( "onPaidEventListener: native ")
                 SolarUtils.trackAdImpression(
                     ad = adValue,
                     adUnit = adId,
@@ -2054,6 +2063,7 @@ object AdmobUtils {
             aggregateErr(nativeAd)
             nativeAd.setOnPaidEventListener {
                 AdjustUtils.postRevenueAdjust(activity, it, adId)
+                logE( "onPaidEventListener: native ")
                 SolarUtils.trackAdImpression(
                     ad = it,
                     adUnit = adId,
@@ -2128,6 +2138,7 @@ object AdmobUtils {
                 holder.currentAdId = adId
                 nativeAd.setOnPaidEventListener {
                     AdjustUtils.postRevenueAdjust(context, it, adId)
+                    logE( "onPaidEventListener: native ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = adId,
@@ -2200,6 +2211,7 @@ object AdmobUtils {
                 if (nativeAd != null) {
                     nativeAd.setOnPaidEventListener {
                         AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
+                        logE( "onPaidEventListener: native ")
                         SolarUtils.trackAdImpression(
                             ad = it,
                             adUnit = holder.currentAdId,
@@ -2234,7 +2246,8 @@ object AdmobUtils {
     }
 
     private fun logE(msg: String) {
-        if (isTesting || Helper.enableReleaseLog) Log.e("AdmobUtils", msg)
+//        if (isTesting || Helper.enableReleaseLog)
+            Log.e("AdmobUtils", msg)
     }
 
     private fun Context.adOrg() = prefs().getBoolean("ads_ref_event", true) && !isTesting && Helper.settings()?.get("ads_enable")?.asString == "2"
