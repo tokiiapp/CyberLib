@@ -134,12 +134,13 @@ object OnResumeUtils : ActivityLifecycleCallbacks, DefaultLifecycleObserver {
                 appResumeAd = ad
                 appResumeLoadTime = (Date()).time
                 ad.setOnPaidEventListener {
-                    AdjustUtils.postRevenueAdjust(myApplication!!, it, appResumeAdId)
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = appResumeAdId,
                         format = "app_open"
                     )
+                    AdjustUtils.postRevenueAdjust(myApplication!!, it, appResumeAdId)
+
                 }
             }
 

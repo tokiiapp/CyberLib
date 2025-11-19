@@ -960,13 +960,14 @@ object AdmobUtils {
                 holder.inter.value = interstitialAd
                 holder.isInterLoading = false
                 interstitialAd.setOnPaidEventListener {
-                    AdjustUtils.postRevenueAdjust(context, it, interstitialAd.adUnitId)
                     logE( "onPaidEventListener: inter ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = interstitialAd.adUnitId,
                         format = "interstitial"
                     )
+                    AdjustUtils.postRevenueAdjust(context, it, interstitialAd.adUnitId)
+
                 }
                 callback.onInterLoaded(interstitialAd, false)
             }
@@ -1183,12 +1184,13 @@ object AdmobUtils {
                         logE( "onPaidEventListener: inter ")
 
                         adValue?.let {
-                            AdjustUtils.postRevenueAdjust(activity, it, interstitialAd.adUnitId)
                             SolarUtils.trackAdImpression(
                                 ad = adValue,
                                 adUnit = interstitialAd.adUnitId,
                                 format = "interstitial"
                             )
+                            AdjustUtils.postRevenueAdjust(activity, it, interstitialAd.adUnitId)
+
                         }
                     }
                     mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
@@ -1328,13 +1330,14 @@ object AdmobUtils {
                 override fun onAdLoaded() {
                     log("Banner Loaded")
                     onPaidEventListener = OnPaidEventListener { adValue ->
-                        AdjustUtils.postRevenueAdjust(activity, adValue, adUnitId)
                         logE( "onPaidEventListener: banner ")
                         SolarUtils.trackAdImpression(
                             ad = adValue,
                             adUnit = adUnitId,
                             format = "banner"
                         )
+                        AdjustUtils.postRevenueAdjust(activity, adValue, adUnitId)
+
                     }
                     shimmerFrameLayout?.stopShimmer()
                     viewGroup.removeAllViews()
@@ -1424,13 +1427,14 @@ object AdmobUtils {
             override fun onAdLoaded() {
                 log("BannerCollap Loaded")
                 adView.onPaidEventListener = OnPaidEventListener { adValue ->
-                    AdjustUtils.postRevenueAdjust(activity, adValue, adView.adUnitId)
                     logE( "onPaidEventListener: banner ")
                     SolarUtils.trackAdImpression(
                         ad = adValue,
                         adUnit = adView.adUnitId,
                         format = "banner"
                     )
+                    AdjustUtils.postRevenueAdjust(activity, adValue, adView.adUnitId)
+
                 }
                 shimmerFrameLayout?.stopShimmer()
                 viewGroup.removeAllViews()
@@ -1569,13 +1573,14 @@ object AdmobUtils {
                 log("Reward Loaded")
                 mRewardedAd = rewardedAd
                 mRewardedAd?.setOnPaidEventListener {
-                    AdjustUtils.postRevenueAdjust(activity, it, rewardedAd.adUnitId)
                     logE( "onPaidEventListener: reward ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = rewardedAd.adUnitId,
                         format = "rewarded"
                     )
+                    AdjustUtils.postRevenueAdjust(activity, it, rewardedAd.adUnitId)
+
                 }
                 mRewardedAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdShowedFullScreenContent() {
@@ -1664,13 +1669,14 @@ object AdmobUtils {
             holder.nativeAd.value = nativeAd
             nativeAd.setOnPaidEventListener { adValue: AdValue? ->
                 adValue?.let {
-                    AdjustUtils.postRevenueAdjust(context, adValue, adId)
                     logE( "onPaidEventListener: native ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = adId,
                         format = "native"
                     )
+                    AdjustUtils.postRevenueAdjust(context, adValue, adId)
+
                 }
             }
             aggregateErr(nativeAd)
@@ -1715,12 +1721,13 @@ object AdmobUtils {
             if (holder.nativeAd.value != null) {
                 holder.nativeAd.value?.setOnPaidEventListener {
                     logE( "onPaidEventListener: native ")
-                    AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = holder.currentAdId,
                         format = "native"
                     )
+                    AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
+
                 }
                 val adView = activity.layoutInflater.inflate(layoutId, null) as NativeAdView
                 populateNativeAdView(holder.nativeAd.value!!, adView)
@@ -1754,12 +1761,13 @@ object AdmobUtils {
                 if (nativeAd != null) {
                     nativeAd.setOnPaidEventListener {
                         logE( "onPaidEventListener: native ")
-                        AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
                         SolarUtils.trackAdImpression(
                             ad = it,
                             adUnit = holder.currentAdId,
                             format = "native"
                         )
+                        AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
+
                     }
                     val adView = activity.layoutInflater.inflate(layoutId, null) as NativeAdView
                     populateNativeAdView(nativeAd, adView)
@@ -1855,13 +1863,14 @@ object AdmobUtils {
             val adView = LayoutInflater.from(activity).inflate(layoutId, null) as NativeAdView
             populateNativeAdView(nativeAd, adView)
             nativeAd.setOnPaidEventListener { adValue: AdValue ->
-                AdjustUtils.postRevenueAdjust(activity, adValue, adId)
                 logE( "onPaidEventListener: native ")
                 SolarUtils.trackAdImpression(
                     ad = adValue,
                     adUnit = adId,
                     format = "native"
                 )
+                AdjustUtils.postRevenueAdjust(activity, adValue, adId)
+
             }
 
             aggregateErr(nativeAd)
@@ -1950,13 +1959,14 @@ object AdmobUtils {
             val adViewCollap = activity.layoutInflater.inflate(R.layout.native_template_collap, null) as NativeAdView
             adViewCollap.tag = tag
             nativeAd.setOnPaidEventListener { adValue: AdValue ->
-                AdjustUtils.postRevenueAdjust(activity, adValue, adId)
                 logE( "onPaidEventListener: native ")
                 SolarUtils.trackAdImpression(
                     ad = adValue,
                     adUnit = adId,
                     format = "native"
                 )
+                AdjustUtils.postRevenueAdjust(activity, adValue, adId)
+
             }
             aggregateErr(nativeAd)
             populateNativeAdViewCollap(nativeAd, adViewCollap, holder.anchor) {
@@ -2072,13 +2082,14 @@ object AdmobUtils {
             val adView = activity.layoutInflater.inflate(R.layout.native_template_full, null) as NativeAdView
             aggregateErr(nativeAd)
             nativeAd.setOnPaidEventListener {
-                AdjustUtils.postRevenueAdjust(activity, it, adId)
                 logE( "onPaidEventListener: native ")
                 SolarUtils.trackAdImpression(
                     ad = it,
                     adUnit = adId,
                     format = "native"
                 )
+                AdjustUtils.postRevenueAdjust(activity, it, adId)
+
             }
             callback.onNativeLoaded()
             populateNativeAdViewFull(nativeAd, adView)
@@ -2147,13 +2158,14 @@ object AdmobUtils {
                 holder.nativeAd.value = nativeAd
                 holder.currentAdId = adId
                 nativeAd.setOnPaidEventListener {
-                    AdjustUtils.postRevenueAdjust(context, it, adId)
                     logE( "onPaidEventListener: native ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = adId,
                         format = "native"
                     )
+                    AdjustUtils.postRevenueAdjust(context, it, adId)
+
                 }
                 aggregateErr(nativeAd)
                 callback.onNativeReady(nativeAd)
@@ -2195,13 +2207,15 @@ object AdmobUtils {
         if (!holder.isNativeLoading) {
             if (holder.nativeAd.value != null) {
                 holder.nativeAd.value?.setOnPaidEventListener {
-                    AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
                     logE( "onPaidEventListener: native ")
+
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = holder.currentAdId,
                         format = "native"
                     )
+                    AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
+
                 }
                 val adView = inflater.inflate(layout, null) as NativeAdView
                 populateNativeAdViewFull(holder.nativeAd.value!!, adView)
@@ -2229,13 +2243,15 @@ object AdmobUtils {
             holder.nativeAd.observe((context as LifecycleOwner)) { nativeAd: NativeAd? ->
                 if (nativeAd != null) {
                     nativeAd.setOnPaidEventListener {
-                        AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
                         logE( "onPaidEventListener: native ")
+
                         SolarUtils.trackAdImpression(
                             ad = it,
                             adUnit = holder.currentAdId,
                             format = "native"
                         )
+                        AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
+
                     }
                     val adView = inflater.inflate(layout, null) as NativeAdView
                     populateNativeAdViewFull(nativeAd, adView)

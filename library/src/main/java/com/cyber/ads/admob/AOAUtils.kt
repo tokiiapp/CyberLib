@@ -115,12 +115,13 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
                     showAOA()
                 }
                 ad.setOnPaidEventListener {
-                    AdjustUtils.postRevenueAdjust(activity, it, ad.adUnitId)
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = ad.adUnitId,
                         format = "app_open"
                     )
+                    AdjustUtils.postRevenueAdjust(activity, it, ad.adUnitId)
+
                 }
             }
         })
@@ -185,12 +186,13 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
                             txt?.visibility = View.INVISIBLE
                         }
                         setOnPaidEventListener {
-                            AdjustUtils.postRevenueAdjust(activity, it, adUnitId)
                             SolarUtils.trackAdImpression(
                                 ad = it,
                                 adUnit = adUnitId,
                                 format = "app_open"
                             )
+                            AdjustUtils.postRevenueAdjust(activity, it, adUnitId)
+
                         }
                         show(activity)
                     } else {
