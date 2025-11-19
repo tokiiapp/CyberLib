@@ -114,6 +114,14 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
                 if (!OnResumeUtils.isShowingAd && !isShowingAd) {
                     showAOA()
                 }
+                ad.setOnPaidEventListener {
+                    AdjustUtils.postRevenueAdjust(activity, it, ad.adUnitId)
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = ad.adUnitId,
+                        format = "app_open"
+                    )
+                }
             }
         })
     }

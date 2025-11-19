@@ -1713,6 +1713,15 @@ object AdmobUtils {
 
         if (!holder.isNativeLoading) {
             if (holder.nativeAd.value != null) {
+                holder.nativeAd.value?.setOnPaidEventListener {
+                    logE( "onPaidEventListener: native ")
+                    AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = holder.currentAdId,
+                        format = "native"
+                    )
+                }
                 val adView = activity.layoutInflater.inflate(layoutId, null) as NativeAdView
                 populateNativeAdView(holder.nativeAd.value!!, adView)
                 holder.nativeAd.removeObservers((activity as LifecycleOwner))
@@ -2185,6 +2194,15 @@ object AdmobUtils {
         val inflater = LayoutInflater.from(context)
         if (!holder.isNativeLoading) {
             if (holder.nativeAd.value != null) {
+                holder.nativeAd.value?.setOnPaidEventListener {
+                    AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
+                    logE( "onPaidEventListener: native ")
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = holder.currentAdId,
+                        format = "native"
+                    )
+                }
                 val adView = inflater.inflate(layout, null) as NativeAdView
                 populateNativeAdViewFull(holder.nativeAd.value!!, adView)
                 shimmerFrameLayout?.stopShimmer()
