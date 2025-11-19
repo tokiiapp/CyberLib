@@ -1180,9 +1180,10 @@ object AdmobUtils {
                 Handler(Looper.getMainLooper()).postDelayed({
                     mInterstitialAd = interstitialAd
                     mInterstitialAd?.onPaidEventListener = OnPaidEventListener { adValue: AdValue? ->
+                        logE( "onPaidEventListener: inter ")
+
                         adValue?.let {
                             AdjustUtils.postRevenueAdjust(activity, it, interstitialAd.adUnitId)
-                            logE( "onPaidEventListener: inter ")
                             SolarUtils.trackAdImpression(
                                 ad = adValue,
                                 adUnit = interstitialAd.adUnitId,
@@ -2246,8 +2247,7 @@ object AdmobUtils {
     }
 
     private fun logE(msg: String) {
-//        if (isTesting || Helper.enableReleaseLog)
-            Log.e("AdmobUtils", msg)
+        if (isTesting || Helper.enableReleaseLog) Log.e("AdmobUtils", msg)
     }
 
     private fun Context.adOrg() = prefs().getBoolean("ads_ref_event", true) && !isTesting && Helper.settings()?.get("ads_enable")?.asString == "2"

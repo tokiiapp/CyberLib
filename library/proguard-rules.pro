@@ -38,3 +38,12 @@
 # If the OAID plugin is used, please add the following obfuscation strategy:
 -keep class com.huawei.hms.**{*;}
 -keep class com.hihonor.**{*;}
+# Giữ Google Ads SDK
+-keep class com.google.android.gms.ads.** { *; }
+
+# Giữ OnPaidEventListener và các callback
+-keep class com.google.android.gms.ads.OnPaidEventListener { *; }
+
+# Nếu dùng Adjust hoặc Firebase cũng phải thêm
+-keep class com.adjust.** { *; }
+-keep class com.google.firebase.** { *; }

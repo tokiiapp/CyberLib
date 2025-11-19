@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
-val libVersion = "1.0.0"
 android {
     namespace = "com.cyber.ads"
     compileSdk = 35
