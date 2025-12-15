@@ -1,4 +1,4 @@
-package com.cyber.demo.opening
+package com.cyber.ads.onboading
 
 data class LanguageModel(
     var flag: Int,

@@ -1,4 +1,4 @@
-package com.cyber.sample.ui
+package com.cyber.ads.onboading
 
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.cyber.demo.opening.LanguageModel
-import com.cyber.sample.databinding.ItemLanguageBinding
+import com.cyber.ads.R
+import com.cyber.ads.databinding.ItemLanguageBinding
 
 class LanguageAdapter(private val onClick: (Int) -> Unit) :
     ListAdapter<LanguageModel, LanguageAdapter.ViewHolder>(DiffCallback()) {
@@ -35,7 +35,15 @@ class LanguageAdapter(private val onClick: (Int) -> Unit) :
         fun bind(item: LanguageModel) {
             binding.ivFlag.setImageResource(item.flag)
             binding.tvName.text = item.name
-            binding.rbCheck.isChecked = selected == adapterPosition
+            if (selected == adapterPosition) {
+                binding.rbCheck.isChecked = true
+                binding.root.setBackgroundResource(R.drawable.bg_item_language_on)
+                binding.tvName.setTextColor(binding.root.context.getColor(R.color.color_item_language_selected))
+            } else {
+                binding.rbCheck.isChecked = false
+                binding.root.setBackgroundResource(R.drawable.bg_item_language_off)
+                binding.tvName.setTextColor(binding.root.context.getColor(R.color.color_item_language_unselected))
+            }
             binding.rbCheck.setOnClickListener {
                 onClick(adapterPosition)
             }

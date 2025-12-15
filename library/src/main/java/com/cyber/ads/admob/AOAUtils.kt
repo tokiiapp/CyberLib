@@ -29,7 +29,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class AOAUtils(private val activity: Activity, val holder: SplashHolder, val timeOut: Long, val callback: AoaCallback) {
+class AOAUtils(private val activity: Activity, val holder: SplashHolder,val index:Int, val timeOut: Long, val callback: AoaCallback) {
     private var appOpenAd: AppOpenAd? = null
     var isShowingAd = true
     var isLoading = true
@@ -42,18 +42,16 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
     private val isAdAvailable: Boolean
         get() = appOpenAd != null
 
-    private fun nowMs() = SystemClock.elapsedRealtime()
-
     fun loadAndShowAoa() {
-        if (AdmobUtils.isPremium) {
-            callback.onAdsClose()
-            return
-        }
-        if (!AdmobUtils.isEnableAds || !AdmobUtils.isNetworkConnected(activity)) {
-            logE("Not EnableAds or No Internet")
-            callback.onAdsFailed("")
-            return
-        }
+//        if (AdmobUtils.isPremium) {
+//            callback.onAdsClose()
+//            return
+//        }
+//        if (!AdmobUtils.isEnableAds || !AdmobUtils.isNetworkConnected(activity)) {
+//            logE("Not EnableAds or No Internet")
+//            callback.onAdsFailed("")
+//            return
+//        }
         //Check timeout show inter
         val job = CoroutineScope(Dispatchers.Main).launch {
             delay(timeOut)
@@ -67,11 +65,12 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
         }
         if (isAdAvailable) {
             job.cancel()
-            callback.onAdsFailed("")
-            logE("appOpenAd != null")
+            isShowingAd = false
+            isLoading = true
+            showAOA()
         } else {
             isShowingAd = false
-            loadAoa(job)
+            loadAoa(job,index)
         }
     }
 
@@ -88,45 +87,37 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
         }
 
         val adId = adIds[index]
-        val loadStart = nowMs()
         log("Loading AOA... $adId")
+        val loadStart = nowMs()
         AppOpenAd.load(activity, adId, adRequest, object : AppOpenAd.AppOpenAdLoadCallback() {
             override fun onAdFailedToLoad(p0: LoadAdError) {
                 super.onAdFailedToLoad(p0)
                 logE("onAdFailedToLoad ${p0.message} - ${p0.cause}")
                 val latency = nowMs() - loadStart
-                SolarUtils.trackAdLoadFailure(
-                    adUnit = adId,
-                    format = "app_open",
-                    loadAdError = p0,
-                    latencyMs = latency,
-                    waterfallIndex = index
-                )
-                loadAoa(job, index + 1)
+                SolarUtils.trackAdLoadFailure(adUnit = adId, format = "app_open", loadAdError = p0, latencyMs = latency, waterfallIndex = index)
+                //                loadAoa(job, index + 1)
+                isLoading = false
+                isShowingAd = false
+                job.cancel()
+                callback.onAdsFailed("")
             }
 
             override fun onAdLoaded(ad: AppOpenAd) {
                 super.onAdLoaded(ad)
                 log("onAdLoaded")
                 appOpenAd = ad
-                callback.onAdsLoaded()
-                job.cancel()
-                if (!OnResumeUtils.isShowingAd && !isShowingAd) {
-                    showAOA()
+                if (!AdmobUtils.splashSuccess) {
+                    callback.onAdsLoaded()
                 }
-                ad.setOnPaidEventListener {
-                    SolarUtils.trackAdImpression(
-                        ad = it,
-                        adUnit = ad.adUnitId,
-                        format = "app_open"
-                    )
-                    AdjustUtils.postRevenueAdjust(activity, it, ad.adUnitId)
-
+                job.cancel()
+                if (!OnResumeUtils.isShowingAd && !isShowingAd && !AdmobUtils.splashSuccess) {
+                    showAOA()
                 }
             }
         })
     }
 
+    private fun nowMs() = SystemClock.elapsedRealtime()
     private fun showAOA() {
         if (!isShowingAd && isAdAvailable && isLoading) {
             isLoading = false
@@ -145,8 +136,15 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
 
                 override fun onAdFailedToShowFullScreenContent(p0: AdError) {
                     runCatching { dialogFullScreen?.dismiss() }
+                    appOpenAd?.let { ad ->
+                        SolarUtils.trackAdShowFailure(
+                            adUnit = ad.adUnitId,
+                            format = "app_open",
+                            adError = p0
+                        )
+                    }
                     isShowingAd = true
-                    if (isStart) {
+                    if (isStart && !AdmobUtils.splashSuccess) {
                         isStart = false
                         callback.onAdsFailed(p0.message)
                         logE("onAdFailedToShowFullScreenContent ${p0.message} - ${p0.cause}")
@@ -161,23 +159,30 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
             }
             appOpenAd?.run {
                 this.fullScreenContentCallback = fullScreenContentCallback
-                dialogFullScreen = Dialog(activity)
-                dialogFullScreen?.requestWindowFeature(Window.FEATURE_NO_TITLE)
-                dialogFullScreen?.setContentView(R.layout.dialog_loading_interstitial)
-                dialogFullScreen?.setCancelable(false)
-                dialogFullScreen?.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
-                dialogFullScreen?.window?.setLayout(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.MATCH_PARENT
-                )
-                val img = dialogFullScreen?.findViewById<LottieAnimationView>(R.id.imageView3)
-                img?.setAnimation(R.raw.loading)
-                runCatching {
-                    if (!activity.isFinishing && dialogFullScreen != null && dialogFullScreen?.isShowing == false) {
-                        dialogFullScreen?.show()
+                var img: LottieAnimationView? = null
+                // Không tạo dialog nếu là splash ads để tránh nháy màn hình
+                if (holder.key != "ads_splash") {
+                    dialogFullScreen = Dialog(activity)
+                    dialogFullScreen?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+                    dialogFullScreen?.setContentView(R.layout.dialog_loading_interstitial)
+                    dialogFullScreen?.setCancelable(false)
+                    dialogFullScreen?.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
+                    dialogFullScreen?.window?.setLayout(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT
+                    )
+                    img = dialogFullScreen?.findViewById<LottieAnimationView>(R.id.imageView3)
+                    img?.setAnimation(R.raw.loading)
+                    runCatching {
+                        if (!activity.isFinishing && dialogFullScreen != null && dialogFullScreen?.isShowing == false) {
+                            dialogFullScreen?.show()
+                        }
                     }
                 }
                 Handler(Looper.getMainLooper()).postDelayed({
+                    if (AdmobUtils.splashSuccess) {
+                        return@postDelayed
+                    }
                     if (!OnResumeUtils.isShowingAd && !isShowingAd) {
                         log("Showing AOA...")
                         runCatching {
@@ -197,13 +202,17 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder, val tim
                         show(activity)
                     } else {
                         logE("OnResume or AOA is showing")
-                        callback.onAdsFailed("")
+                        if (!AdmobUtils.splashSuccess) {
+                            callback.onAdsFailed("")
+                        }
                     }
                 }, 800)
             }
         } else {
             logE("AOA not available")
-            callback.onAdsFailed("")
+            if (!AdmobUtils.splashSuccess) {
+                callback.onAdsFailed("")
+            }
         }
     }
 

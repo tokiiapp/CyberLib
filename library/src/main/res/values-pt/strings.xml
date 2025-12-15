@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">Carregando...</string>
-    <string name="no_internet">Sem Internet</string>
-    <string name="please_check_your_connection">Por favor, verifique sua conexão e tente novamente</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">Carregando…</string>
+    <string name="no_internet">Sem internet</string>
+    <string name="please_check_your_connection">Por favor, verifique sua conexão e tente novamente.</string>
     <string name="cancel">Cancelar</string>
     <string name="retry">Tentar novamente</string>
+    <string name="start">Começar</string>
+    <string name="next">Próximo</string>
+    <string name="language">Linguagem</string>
+    <string name="try_again">Tente novamente</string>
+    <string name="uninstall">Desinstalar</string>
+    <string name="other">Outro</string>
+    <string name="failed_open_the_browser">Não foi possível abrir o navegador.</string>
+    <string name="confirm_uninstall_message">Divirta-se e explore ferramentas inteligentes e criativas — efeitos automáticos, ações rápidas e compartilhamento instantâneo que tornam cada momento melhor!</string>
+    <string name="confirm_uninstall_title">Mais de 90% dos usuários adoram nosso aplicativo por seus recursos inteligentes, desempenho rápido e experiência criativa descomplicada.</string>
+    <string name="i_do_not_need_it">Eu não preciso mais deste aplicativo.</string>
+    <string name="did_not_understand">Eu não entendi como usá-lo.</string>
+    <string name="too_many_ads">Anúncios em excesso</string>
+    <string name="feature_does_not_working">O recurso não está funcionando.</string>
+    <string name="issues_encountered_during_usage">Problemas encontrados durante o uso</string>
+    <string name="still_uninstall">Ainda quero desinstalar</string>
+    <string name="please_specify_reason">Por favor, especifique o motivo.</string>
 </resources>

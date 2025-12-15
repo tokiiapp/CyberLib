@@ -3,5 +3,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="colorAccent">#2196F3</color>
-    <color name="banner_divider_color">#85FF00</color>
+    <color name="banner_divider_color">#000000</color>
+
+    <color name="color_background_intro">#000000</color>
+    <color name="color_title_intro">#FFFFFF</color>
+    <color name="color_body_intro">#DCDCDC</color>
+    <color name="native_button_color">#C73030</color>
+    <color name="color_native_install_button_text">#000000</color>
 </resources>

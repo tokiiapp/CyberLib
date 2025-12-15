@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">Memuat...</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">Memuat…</string>
     <string name="no_internet">Tidak ada internet</string>
     <string name="please_check_your_connection">Silakan periksa koneksi Anda dan coba lagi</string>
     <string name="cancel">Membatalkan</string>
     <string name="retry">Mencoba kembali</string>
+    <string name="start">Awal</string>
+    <string name="next">Berikutnya</string>
+    <string name="language">Bahasa</string>
+    <string name="try_again">Coba Lagi</string>
+    <string name="uninstall">Copot pemasangan</string>
+    <string name="other">Lainnya</string>
+    <string name="failed_open_the_browser">Gagal membuka browser.</string>
+    <string name="confirm_uninstall_message">Bergabunglah dalam keseruan dan jelajahi berbagai alat cerdas dan kreatif — efek otomatis, tindakan cepat, dan berbagi instan yang membuat setiap momen menjadi lebih baik!</string>
+    <string name="confirm_uninstall_title">Lebih dari 90% pengguna menyukai aplikasi kami karena fitur-fiturnya yang cerdas, kinerja yang cepat, dan pengalaman berkreasi yang mudah.</string>
+    <string name="i_do_not_need_it">Saya tidak lagi membutuhkan aplikasi ini</string>
+    <string name="did_not_understand">Saya tidak mengerti cara menggunakannya</string>
+    <string name="too_many_ads">Terlalu banyak iklan</string>
+    <string name="feature_does_not_working">Fitur tidak berfungsi</string>
+    <string name="issues_encountered_during_usage">Masalah yang dihadapi selama penggunaan</string>
+    <string name="still_uninstall">Masih ingin menghapusnya</string>
+    <string name="please_specify_reason">Mohon sebutkan alasan Anda</string>
 </resources>

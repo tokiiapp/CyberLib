@@ -1,6 +1,7 @@
 package com.cyber.ads.remote
 
 import androidx.lifecycle.MutableLiveData
+import com.cyber.ads.admob.AdmobUtils.isTesting
 import com.google.android.gms.ads.interstitial.InterstitialAd
 
 open class InterHolder(key: String) : NativeHolder(key) {

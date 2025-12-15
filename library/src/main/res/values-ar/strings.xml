@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">تحميل...</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">تحميل…</string>
     <string name="no_internet">لا يوجد إنترنت</string>
     <string name="please_check_your_connection">يرجى التحقق من اتصالك وحاول مرة أخرى</string>
     <string name="cancel">يلغي</string>
     <string name="retry">إعادة المحاولة</string>
+    <string name="start">يبدأ</string>
+    <string name="next">التالي</string>
+    <string name="language">لغة</string>
+    <string name="try_again">حاول ثانية</string>
+    <string name="uninstall">إلغاء التثبيت</string>
+    <string name="other">آخر</string>
+    <string name="failed_open_the_browser">فشل في فتح المتصفح.</string>
+    <string name="confirm_uninstall_message">انضم إلى المرح واستكشف الأدوات الذكية والإبداعية - التأثيرات التلقائية والإجراءات السريعة والمشاركة الفورية التي تجعل كل لحظة أفضل!</string>
+    <string name="confirm_uninstall_title">أكثر من 90% من المستخدمين يحبون تطبيقنا لميزاته الذكية وأدائه السريع وتجربة الإبداع السهلة.</string>
+    <string name="i_do_not_need_it">لم أعد بحاجة لهذا التطبيق</string>
+    <string name="did_not_understand">لم أفهم كيفية استخدامه</string>
+    <string name="too_many_ads">الكثير من الإعلانات</string>
+    <string name="feature_does_not_working">الميزة لا تعمل</string>
+    <string name="issues_encountered_during_usage">المشاكل التي واجهتها أثناء الاستخدام</string>
+    <string name="still_uninstall">لا أزال أريد إلغاء التثبيت</string>
+    <string name="please_specify_reason">يرجى تحديد السبب الخاص بك</string>
 </resources>

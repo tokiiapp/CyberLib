@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">로딩중...</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">로딩 중…</string>
     <string name="no_internet">인터넷 없음</string>
     <string name="please_check_your_connection">연결을 확인하고 다시 시도하세요.</string>
     <string name="cancel">취소</string>
     <string name="retry">다시 해 보다</string>
+    <string name="start">시작</string>
+    <string name="next">다음</string>
+    <string name="language">언어</string>
+    <string name="try_again">다시 시도하세요</string>
+    <string name="uninstall">제거</string>
+    <string name="other">다른</string>
+    <string name="failed_open_the_browser">브라우저를 열 수 없습니다.</string>
+    <string name="confirm_uninstall_message">재미있게 참여하여 자동 효과, 빠른 작업, 즉각적인 공유 등 모든 순간을 더욱 특별하게 만들어 주는 스마트하고 창의적인 도구를 살펴보세요!</string>
+    <string name="confirm_uninstall_title">90%가 넘는 사용자가 스마트한 기능, 빠른 성능, 편리한 창작 경험 덕분에 앱을 좋아합니다.</string>
+    <string name="i_do_not_need_it">이 앱은 더 이상 필요하지 않습니다</string>
+    <string name="did_not_understand">나는 그것을 사용하는 방법을 이해하지 못했습니다</string>
+    <string name="too_many_ads">광고가 너무 많아요</string>
+    <string name="feature_does_not_working">기능이 작동하지 않습니다</string>
+    <string name="issues_encountered_during_usage">사용 중 발생한 문제</string>
+    <string name="still_uninstall">아직도 제거하고 싶어요</string>
+    <string name="please_specify_reason">이유를 구체적으로 말씀해 주세요</string>
 </resources>

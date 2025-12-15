@@ -50,6 +50,7 @@ object OnResumeUtils : ActivityLifecycleCallbacks, DefaultLifecycleObserver {
     private var dialogFullScreen: Dialog? = null
     var isLoading: Boolean = false
     var isDismiss: Boolean = false
+    private var disableNextResume: Boolean = false
 
     internal fun init(activity: Activity) {
         if (!enableOnResume() || !AdmobUtils.isEnableAds) {
@@ -96,6 +97,11 @@ object OnResumeUtils : ActivityLifecycleCallbacks, DefaultLifecycleObserver {
     fun disableOnResume(activityClass: Class<*>?) {
         log("disableOnResume: " + activityClass?.getSimpleName())
         activityClass?.let { disabledAppOpenList.add(it) }
+    }
+
+    @JvmStatic
+    fun disableNextResume() {
+        disableNextResume = true
     }
 
     @JvmStatic
@@ -211,6 +217,12 @@ object OnResumeUtils : ActivityLifecycleCallbacks, DefaultLifecycleObserver {
     }
 
     private fun checkAndShowOnResume(checkLifecycle: Boolean) {
+        if (disableNextResume) {
+            logE("Disable next OnResume")
+            disableNextResume = false
+            return
+        }
+
         val curActivity = currentActivity?.get() ?: return
         if (curActivity.javaClass == AdActivity::class.java || AdmobUtils.isAdShowing || !AdmobUtils.isEnableAds || AdmobUtils.isPremium) {
             return

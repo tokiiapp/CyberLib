@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">Đang tải...</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">Đang tải…</string>
     <string name="no_internet">Không có Internet</string>
     <string name="please_check_your_connection">Vui lòng kiểm tra kết nối của bạn và thử lại</string>
     <string name="cancel">Hủy bỏ</string>
     <string name="retry">Thử lại</string>
+    <string name="start">Bắt đầu</string>
+    <string name="next">Kế tiếp</string>
+    <string name="language">Ngôn ngữ</string>
+    <string name="try_again">Thử lại</string>
+    <string name="uninstall">Gỡ cài đặt</string>
+    <string name="other">Khác</string>
+    <string name="failed_open_the_browser">Không mở được trình duyệt.</string>
+    <string name="confirm_uninstall_message">Hãy tham gia và khám phá các công cụ thông minh, sáng tạo — hiệu ứng tự động, hành động nhanh và chia sẻ tức thì giúp mọi khoảnh khắc trở nên tuyệt vời hơn!</string>
+    <string name="confirm_uninstall_title">Hơn 90% người dùng yêu thích ứng dụng của chúng tôi vì các tính năng thông minh, hiệu suất nhanh và trải nghiệm sáng tạo dễ dàng.</string>
+    <string name="i_do_not_need_it">Tôi không còn cần ứng dụng này nữa</string>
+    <string name="did_not_understand">Tôi không hiểu cách sử dụng nó</string>
+    <string name="too_many_ads">Quá nhiều quảng cáo</string>
+    <string name="feature_does_not_working">Tính năng không hoạt động</string>
+    <string name="issues_encountered_during_usage">Các vấn đề gặp phải trong quá trình sử dụng</string>
+    <string name="still_uninstall">Vẫn muốn gỡ cài đặt</string>
+    <string name="please_specify_reason">Vui lòng nêu rõ lý do của bạn</string>
 </resources>

@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="intro1">xxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxxxx</string>
     <string name="LOADING">লোড হচ্ছে...</string>
     <string name="no_internet">ইন্টারনেট নেই</string>
-    <string name="please_check_your_connection">আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন</string>
+    <string name="please_check_your_connection">আপনার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</string>
     <string name="cancel">বাতিল করুন</string>
-    <string name="retry">আবার চেষ্টা করুন</string>
+    <string name="retry">পুনরায় চেষ্টা করুন</string>
+    <string name="start">শুরু করুন</string>
+    <string name="next">পরবর্তী</string>
+    <string name="language">ভাষা</string>
+    <string name="try_again">আবার চেষ্টা করো</string>
+    <string name="uninstall">আনইনস্টল করুন</string>
+    <string name="other">অন্যান্য</string>
+    <string name="failed_open_the_browser">ব্রাউজারটি খুলতে ব্যর্থ হয়েছে।</string>
+    <string name="confirm_uninstall_message">মজায় যোগ দিন এবং স্মার্ট, সৃজনশীল টুলগুলি অন্বেষণ করুন — স্বয়ংক্রিয় প্রভাব, দ্রুত পদক্ষেপ এবং তাৎক্ষণিক ভাগাভাগি যা প্রতিটি মুহূর্তকে আরও সুন্দর করে তোলে!</string>
+    <string name="confirm_uninstall_title">৯০% এরও বেশি ব্যবহারকারী আমাদের অ্যাপটিকে এর স্মার্ট বৈশিষ্ট্য, দ্রুত কর্মক্ষমতা এবং সহজ সৃজনশীল অভিজ্ঞতার জন্য পছন্দ করেন।</string>
+    <string name="i_do_not_need_it">আমার আর এই অ্যাপের প্রয়োজন নেই।</string>
+    <string name="did_not_understand">আমি বুঝতে পারিনি কিভাবে এটি ব্যবহার করতে হয়।</string>
+    <string name="too_many_ads">অনেক বেশি বিজ্ঞাপন</string>
+    <string name="feature_does_not_working">বৈশিষ্ট্যটি কাজ করছে না</string>
+    <string name="issues_encountered_during_usage">ব্যবহারের সময় যেসব সমস্যার সম্মুখীন হতে হয়েছে</string>
+    <string name="still_uninstall">এখনও আনইনস্টল করতে চাই</string>
+    <string name="please_specify_reason">আপনার কারণ উল্লেখ করুন</string>
 </resources>

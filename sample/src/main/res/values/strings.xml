@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name" translatable="false">Cyber Ads</string>
+    <string name="facebook_id" translatable="false">xxxxx123</string>
+    <string name="facebook_id_token" translatable="false">xxxxxx123</string>
+    <string name="app_name">Cyber Ads</string>
 
     <string name="cancel">Cancel</string>
     <string name="next">Next</string>
@@ -24,9 +26,10 @@
     <string name="weekly">Weekly</string>
     <string name="monthly">Monthly</string>
     <string name="auto_renewal_per_week">Auto - renewal per week</string>
-    <string name="you_have_purchased">You have purchased</string>
+    <string name="you_have_purchased">Purchase successful!</string>
     <string name="no_active_subscription">No active subscription</string>
     <string name="error">Error</string>
     <string name="load_prices_failed">Load prices failed</string>
     <string name="free_trial">Free trial %1$d %2$s</string>
+    <string name="uninstall">Uninstall</string>
 </resources>

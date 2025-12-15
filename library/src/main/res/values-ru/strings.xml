@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">Загрузка...</string>
+    <string name="intro1">ххххххххххххххх</string>
+    <string name="intro2">ххххххххххххххх</string>
+    <string name="intro3">ххххххххххххххх</string>
+    <string name="intro1_content">ххххххххххххххх</string>
+    <string name="intro2_content">ххххххххххххххх</string>
+    <string name="intro3_content">ххххххххххххххх</string>
+    <string name="LOADING">Загрузка…</string>
     <string name="no_internet">Нет интернета</string>
     <string name="please_check_your_connection">Проверьте подключение и повторите попытку.</string>
     <string name="cancel">Отмена</string>
     <string name="retry">Повторить попытку</string>
+    <string name="start">Начинать</string>
+    <string name="next">Следующий</string>
+    <string name="language">Язык</string>
+    <string name="try_again">Попробуйте еще раз</string>
+    <string name="uninstall">Удалить</string>
+    <string name="other">Другой</string>
+    <string name="failed_open_the_browser">Не удалось открыть браузер.</string>
+    <string name="confirm_uninstall_message">Присоединяйтесь к веселью и изучайте умные, креативные инструменты — автоматические эффекты, быстрые действия и мгновенный обмен, которые делают каждый момент лучше!</string>
+    <string name="confirm_uninstall_title">Более 90% пользователей любят наше приложение за его интеллектуальные функции, высокую производительность и простоту творческого процесса.</string>
+    <string name="i_do_not_need_it">Мне больше не нужно это приложение</string>
+    <string name="did_not_understand">Я не понял, как этим пользоваться.</string>
+    <string name="too_many_ads">Слишком много рекламы</string>
+    <string name="feature_does_not_working">Функция не работает</string>
+    <string name="issues_encountered_during_usage">Проблемы, возникшие во время использования</string>
+    <string name="still_uninstall">Все еще хочу удалить</string>
+    <string name="please_specify_reason">Пожалуйста, укажите причину</string>
 </resources>

@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">Caricamento...</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">Caricamento…</string>
     <string name="no_internet">Nessuna connessione Internet</string>
     <string name="please_check_your_connection">Controlla la tua connessione e riprova</string>
     <string name="cancel">Cancellare</string>
     <string name="retry">Riprova</string>
+    <string name="start">Inizio</string>
+    <string name="next">Prossimo</string>
+    <string name="language">Lingua</string>
+    <string name="try_again">Riprova</string>
+    <string name="uninstall">Disinstallare</string>
+    <string name="other">Altro</string>
+    <string name="failed_open_the_browser">Impossibile aprire il browser.</string>
+    <string name="confirm_uninstall_message">Unisciti al divertimento ed esplora strumenti intelligenti e creativi: effetti automatici, azioni rapide e condivisione istantanea che rendono ogni momento migliore!</string>
+    <string name="confirm_uninstall_title">Oltre il 90% degli utenti apprezza la nostra app per le sue funzionalità intelligenti, le prestazioni rapide e la semplicità dell\'esperienza creativa.</string>
+    <string name="i_do_not_need_it">Non ho più bisogno di questa app</string>
+    <string name="did_not_understand">Non ho capito come usarlo</string>
+    <string name="too_many_ads">Troppe pubblicità</string>
+    <string name="feature_does_not_working">La funzionalità non funziona</string>
+    <string name="issues_encountered_during_usage">Problemi riscontrati durante l\'utilizzo</string>
+    <string name="still_uninstall">Voglio ancora disinstallare</string>
+    <string name="please_specify_reason">Si prega di specificare il motivo</string>
 </resources>

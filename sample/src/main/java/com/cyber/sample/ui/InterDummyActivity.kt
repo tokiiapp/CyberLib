@@ -2,6 +2,10 @@ package com.cyber.sample.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.cyber.ads.admob.AdmobUtils
+import com.cyber.ads.utils.addActivity
+import com.cyber.sample.R
+import com.cyber.sample.RemoteConfig
 import com.cyber.sample.databinding.ActivityInterDummyBinding
 
 class InterDummyActivity : AppCompatActivity() {

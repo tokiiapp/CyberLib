@@ -9,16 +9,49 @@ android {
 
     defaultConfig {
         minSdk = 24
+        externalNativeBuild {
+            cmake {
+                cppFlags += ""
+            }
+        }
+
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            // relative to module root
+            path = file("src/main/cpp/CMakeLists.txt")
+        }
     }
 
     buildTypes {
+        debug {
+            externalNativeBuild {
+                cmake {
+                    arguments += "-DDEBUG=1"
+                }
+            }
+        }
         release {
+            externalNativeBuild {
+                cmake {
+                    arguments += "-DDEBUG=0"
+                }
+            }
+
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+    }
+    buildFeatures {
+        viewBinding = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -50,6 +83,8 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.lottie.v640)
     implementation(libs.user.messaging.platform)
+    implementation(libs.app.update.ktx)
+
 
     //Adjust
     implementation(libs.adjust.android.v520)

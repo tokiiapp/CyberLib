@@ -1,6 +1,7 @@
 package com.cyber.ads.utils
 
 import android.content.Context
+import android.util.Log
 import androidx.core.content.edit
 import com.android.installreferrer.api.InstallReferrerClient
 import com.android.installreferrer.api.InstallReferrerStateListener
@@ -14,6 +15,7 @@ import com.cyber.ads.remote.NativeHolder
 import com.cyber.ads.remote.NativeMultiHolder
 import com.cyber.ads.remote.RewardHolder
 import com.cyber.ads.remote.SplashHolder
+import com.google.android.gms.ads.nativead.NativeAd
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -74,8 +76,12 @@ object Helper {
 //        holder.nativeTemplate = obj["native_template"]?.asString
 
         obj["show_loading"]?.asString?.toBooleanStrictOrNull()?.let { holder.showLoading = it }
-        obj["inter"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.interUnit = parseUnitIds(it) }
-        obj["native_inter"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.nativeUnit = parseUnitIds(it) }
+        obj["inter"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.interUnit = parseUnitIds(it)
+        }
+        obj["native_inter"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.nativeUnit = parseUnitIds(it)
+        }
     }
 
     fun parseReward(holder: RewardHolder) {
@@ -84,7 +90,9 @@ object Helper {
         holder.enable = obj["enable"]?.asString ?: "0"
 
         obj["show_loading"]?.asString?.toBooleanStrictOrNull()?.let { holder.showLoading = it }
-        obj["reward"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.rewardUnit = parseUnitIds(it) }
+        obj["reward"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.rewardUnit = parseUnitIds(it)
+        }
     }
 
     fun parseSplash(holder: SplashHolder) {
@@ -96,9 +104,15 @@ object Helper {
 //        holder.nativeTemplate = obj["native_template"]?.asString
 
         obj["show_loading"]?.asString?.toBooleanStrictOrNull()?.let { holder.showLoading = it }
-        obj["app_open"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.appOpenUnit = parseUnitIds(it) }
-        obj["inter"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.interUnit = parseUnitIds(it) }
-        obj["native_inter"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.nativeUnit = parseUnitIds(it) }
+        obj["app_open"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.appOpenUnit = parseUnitIds(it)
+        }
+        obj["inter"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.interUnit = parseUnitIds(it)
+        }
+        obj["native_inter"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.nativeUnit = parseUnitIds(it)
+        }
     }
 
     fun parseBanner(holder: BannerHolder) {
@@ -114,9 +128,15 @@ object Helper {
             holder.loadingSize = if (it.startsWith("small")) LoadingSize.SMALL
             else LoadingSize.TINY
         }
-        obj["banner"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.bannerUnit = parseUnitIds(it) }
-        obj["banner_collap"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.bannerCollapUnit = parseUnitIds(it) }
-        obj["native"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.nativeUnit = parseUnitIds(it) }
+        obj["banner"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.bannerUnit = parseUnitIds(it)
+        }
+        obj["banner_collap"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.bannerCollapUnit = parseUnitIds(it)
+        }
+        obj["native"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.nativeUnit = parseUnitIds(it)
+        }
     }
 
     fun parseNative(holder: NativeHolder) {
@@ -137,7 +157,9 @@ object Helper {
             }
         }
 //        log(holder.toString())
-        obj["native"]?.takeIf { it.isJsonObject }?.asJsonObject?.let { holder.nativeUnit = parseUnitIds(it) }
+        obj["native"]?.takeIf { it.isJsonObject }?.asJsonObject?.let {
+            holder.nativeUnit = parseUnitIds(it)
+        }
     }
 
     fun parseNativeMulti(holder: NativeMultiHolder) {
@@ -156,39 +178,32 @@ object Helper {
     internal fun parseUnitIds(obj: JsonObject): AdUnit {
         val name = obj["name"]?.asString ?: obj["name1"]?.asString ?: ""
 //        val name2 = obj["name2"]?.asString ?: ""
-        val id1 = obj["id1"]?.asString ?: ""
-        val id2 = obj["id2"]?.asString ?: ""
-        val id3 = obj["id3"]?.asString ?: ""
+        val id1 = obj["id1"]?.asString ?: obj["id1"]?.toString() ?: ""
+        val id2 = obj["id2"]?.asString ?: obj["id2"]?.toString() ?: ""
+        val id3 = obj["id3"]?.asString ?: obj["id3"]?.toString() ?: ""
         return AdUnit(name, id1, id2, id3)
     }
 
-    fun aggr(): List<String> {
-        return mutableListOf(
-            "Anunciodeprueba", "Annoncetest", "테스트광고", "TestAd", "Annuncioditesto",
-            "Testanzeige", "TesIklan", "Quảngcáothửnghiệm", "Anúnciodeteste",
-            "পরীক্ষামূলকবিজ্ঞাপন", "जाँचविज्ञापन", "إعلانتجريبي", "Тестовоеобъявление"
-        )
+    fun nativeExtras(ad: NativeAd?): Boolean {
+        ad?.headline?.let {
+            return !TextUtils.contains(it)
+        }
+
+        return true
     }
 
-    fun checkUtm(context: Context) {
+    fun checkFirstOpen(context: Context) {
         val referrerClient = InstallReferrerClient.newBuilder(context).build()
         referrerClient.startConnection(object : InstallReferrerStateListener {
             override fun onInstallReferrerSetupFinished(responseCode: Int) {
                 try {
                     when (responseCode) {
                         InstallReferrerClient.InstallReferrerResponse.OK -> {
-                            val lowerRef = referrerClient.installReferrer.installReferrer.lowercase()
-                            if (lowerRef.contains("gclid=") ||
-                                lowerRef.contains("gbraid=") ||
-                                lowerRef.contains("gad_source=") ||
-                                lowerRef.contains("apps.facebook.com") ||
-                                lowerRef.contains("apps.instagram.com")||
-                                lowerRef.contains("solarengine")
-                            ) {
-                                context.prefs().edit { putBoolean("ads_ref_event", false) }
-                                FirebaseAnalytics.getInstance(context).logEvent("ads_ref_true", null)
+                            if (TextUtils.isNotNull(referrerClient.installReferrer.installReferrer)) {
+                                context.prefs().edit { putBoolean("is_are", false) }
+                                FirebaseAnalytics.getInstance(context).logEvent("is_art", null)
                             } else {
-                                FirebaseAnalytics.getInstance(context).logEvent("ads_ref_false", null)
+                                FirebaseAnalytics.getInstance(context).logEvent("is_arf", null)
                             }
                             referrerClient.endConnection()
                         }
@@ -213,8 +228,8 @@ object Helper {
                             referrerClient.endConnection()
                         }
                     }
-                } catch (t: Throwable) {
-                    logE("Ref exception: ${t.message}")
+                } catch (e: Throwable) {
+                    e.printStackTrace()
                     referrerClient.endConnection()
                 }
             }

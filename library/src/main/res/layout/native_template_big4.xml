@@ -10,8 +10,7 @@
         android:id="@+id/ad_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="50dp"
-        android:padding="8dp">
+        android:minHeight="50dp">
 
         <com.google.android.gms.ads.nativead.MediaView
             android:id="@+id/ad_media"
@@ -19,7 +18,7 @@
             android:layout_height="180dp"
             android:layout_gravity="fill"
             android:layout_marginHorizontal="10dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="@dimen/_6sdp"
             android:layout_marginBottom="4dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -121,6 +120,7 @@
             android:id="@+id/ad_call_to_action"
             android:layout_width="match_parent"
             android:layout_height="@dimen/native_install_button_height"
+            android:layout_marginTop="@dimen/_4sdp"
             android:layout_marginHorizontal="10dp"
             android:layout_marginBottom="4dp"
             android:background="@drawable/bg_native_install_button"

@@ -2,16 +2,25 @@
 <resources>
     <color name="white">#FFFFFF</color>
 
-    <!--    Colors to override-->
+    <color name="colorAccent">#000000</color>
     <color name="color_loading_shimmer1">#dddddd</color>
     <color name="color_loading_shimmer2">#BFBFBF</color>
     <color name="banner_divider_color">#787878</color>
-    <color name="native_button_color">#3F51B5</color>
+    <color name="native_button_color">#2196F3</color>
     <color name="native_ad_badge_color">#3F51B5</color>
     <color name="native_bg_color">#F6F6F6</color>
     <color name="native_headline_color">#000000</color>
     <color name="native_body_color">#252525</color>
     <color name="color_native_install_button_text">#FFFFFF</color>
     <color name="dialog_no_internet_text_color">#333333</color>
+
+    <color name="color_item_language_unselected">#212121</color>
+    <color name="color_item_language_selected">#333333</color>
+    <color name="color_background_intro">#FFFFFF</color>
+    <color name="color_title_intro">#000000</color>
+    <color name="color_body_intro">#808080</color>
+    <color name="color_item_language">#000000</color>
+    <color name="color_sw_on">#2196F3</color>
+    <color name="color_sw_off">#808080</color>
 
 </resources>

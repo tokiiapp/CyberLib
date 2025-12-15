@@ -10,8 +10,7 @@
         android:id="@+id/ad_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="50dp"
-        android:padding="8dp">
+        android:minHeight="50dp">
 
         <com.google.android.gms.ads.nativead.MediaView
             android:id="@+id/ad_media"
@@ -19,7 +18,7 @@
             android:layout_height="180dp"
             android:layout_gravity="fill"
             android:layout_marginHorizontal="10dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="@dimen/_6sdp"
             android:layout_marginBottom="4dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -54,6 +53,7 @@
                 android:id="@+id/cardIcon"
                 android:layout_width="@dimen/_35sdp"
                 android:layout_height="@dimen/_35sdp"
+                android:layout_marginTop="@dimen/_4sdp"
                 app:cardCornerRadius="8dp"
                 app:cardElevation="0dp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -72,7 +72,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="@dimen/_4sdp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Test Ads"

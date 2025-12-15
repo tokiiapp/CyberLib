@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
+import android.content.IntentSender
 import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
@@ -13,7 +14,17 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.annotation.Keep
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import com.cyber.ads.admob.AdmobUtils
+import com.google.android.gms.tasks.Task
+import com.google.android.play.core.appupdate.AppUpdateInfo
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.InstallStatus
+import com.google.android.play.core.install.model.UpdateAvailability
 
 fun Context.toast(msg: String, length: Int = Toast.LENGTH_SHORT) {
     Handler(Looper.getMainLooper()).post {
@@ -48,6 +59,16 @@ fun Int.dpToPx(context: Context): Int {
     return (this * density).toInt()
 }
 
+fun Context.dpToPx(number: Number): Int {
+    val density = resources.displayMetrics.density
+    return (number.toDouble() * density).toInt()
+}
+
+fun Fragment.dpToPx(number: Number): Int {
+    val density = resources.displayMetrics.density
+    return (number.toDouble() * density).toInt()
+}
+
 fun Context.prefs(): SharedPreferences {
     return getSharedPreferences("APP_PREFS", MODE_PRIVATE)
 }
@@ -63,19 +84,68 @@ inline fun <reified T : Activity> Context.replaceActivity(block: Intent.() -> Un
 }
 
 fun AlertDialog.setupDialog(activity: Activity) {
-    window!!.setBackgroundDrawableResource(android.R.color.transparent)
-    window!!.setFlags(
+    val win = window ?: return
+    win.setBackgroundDrawableResource(android.R.color.transparent)
+    win.setFlags(
         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
     )
-    window!!.decorView.systemUiVisibility = activity.window.decorView.systemUiVisibility
+    win.decorView.systemUiVisibility = activity.window.decorView.systemUiVisibility
 
     setOnShowListener {
-        window!!.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        val wm =
-            activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        wm.updateViewLayout(window!!.decorView, window!!.attributes)
+        if (activity.isFinishing || activity.isDestroyed) return@setOnShowListener
+        val w = window ?: return@setOnShowListener
+        w.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
     }
-//    window?.setDimAmount(0.8f)
-    window?.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+    win.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+}
+
+
+internal fun CharSequence.toFirebaseEventName(): String {
+    var event = this.toString().trim()
+        .lowercase()
+        .replace("[^a-z0-9_\\s]".toRegex(), "")
+        .replace("\\s+".toRegex(), "_")
+
+    if (event.isNotEmpty() && !event[0].isLetter()) {
+        event = "event_$event"
+    }
+
+    return event.take(40)
+}
+
+fun setupInAppUpdate(activity: AppCompatActivity) {
+    val updateManager = AppUpdateManagerFactory.create(activity)
+    inAppUpdate(activity, updateManager)
+}
+
+private fun inAppUpdate(activity: AppCompatActivity, updateManager: AppUpdateManager) {
+    val info: Task<AppUpdateInfo> = updateManager.appUpdateInfo
+    info.addOnSuccessListener { update ->
+        if (update.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
+            flexibleUpdate(activity, update, updateManager)
+        }
+    }
+    updateManager.registerListener { state ->
+        if (state.installStatus() == InstallStatus.DOWNLOADED) {
+            updateManager.completeUpdate()
+        }
+    }
+}
+
+private fun flexibleUpdate(
+    activity: AppCompatActivity,
+    info: AppUpdateInfo,
+    updateManager: AppUpdateManager
+) {
+    try {
+        updateManager.startUpdateFlowForResult(
+            info,
+            activity,
+            AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build(),
+            999
+        )
+    } catch (_: IntentSender.SendIntentException) {
+    }
 }

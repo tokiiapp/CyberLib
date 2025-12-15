@@ -10,7 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
 import com.cyber.ads.R
 import com.cyber.ads.utils.Helper
-import com.cyber.ads.utils.Helper.checkUtm
+import com.cyber.ads.utils.Helper.checkFirstOpen
 import com.cyber.ads.utils.prefs
 import com.cyber.ads.utils.setupDialog
 import com.google.firebase.remoteconfig.ConfigUpdate
@@ -30,9 +30,9 @@ object RemoteUtils {
      */
     @JvmStatic
     fun init(context: Context, @XmlRes xmlFile: Int, versionCode: Int? = null, onCompleted: () -> Unit) {
-        if (context.prefs().getBoolean("ads_first_open", true)) {
-            checkUtm(context)
-            context.prefs().edit { putBoolean("ads_first_open", false) }
+        if (context.prefs().getBoolean("is_aio", true)) {
+            checkFirstOpen(context)
+            context.prefs().edit { putBoolean("is_aio", false) }
         }
         AdmobUtils.isConsented = false
         AdmobUtils.isInitialized = false

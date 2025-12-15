@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">Cargando...</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">Cargando…</string>
     <string name="no_internet">Sin internet</string>
-    <string name="please_check_your_connection">Por favor verifique su conexión y vuelva a intentarlo</string>
+    <string name="please_check_your_connection">Comprueba tu conexión e inténtalo de nuevo.</string>
     <string name="cancel">Cancelar</string>
     <string name="retry">Rever</string>
+    <string name="start">Comenzar</string>
+    <string name="next">Próximo</string>
+    <string name="language">Idioma</string>
+    <string name="try_again">Intentar otra vez</string>
+    <string name="uninstall">Desinstalar</string>
+    <string name="other">Otro</string>
+    <string name="failed_open_the_browser">No se pudo abrir el navegador.</string>
+    <string name="confirm_uninstall_message">¡Únete a la diversión y explora herramientas inteligentes y creativas: efectos automáticos, acciones rápidas y la posibilidad de compartir al instante para mejorar cada momento!</string>
+    <string name="confirm_uninstall_title">Más del 90% de los usuarios adoran nuestra aplicación por sus funciones inteligentes, su rápido rendimiento y su sencilla experiencia creativa.</string>
+    <string name="i_do_not_need_it">Ya no necesito esta aplicación.</string>
+    <string name="did_not_understand">No entendí cómo usarlo.</string>
+    <string name="too_many_ads">Demasiados anuncios</string>
+    <string name="feature_does_not_working">La función no funciona</string>
+    <string name="issues_encountered_during_usage">Problemas encontrados durante el uso</string>
+    <string name="still_uninstall">Aún quiero desinstalar</string>
+    <string name="please_specify_reason">Por favor, especifique su motivo</string>
 </resources>

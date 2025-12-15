@@ -3,6 +3,7 @@ package com.cyber.sample
 import android.app.Activity
 import android.app.Application.ActivityLifecycleCallbacks
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import com.cyber.ads.adjust.AdjustUtils
 import com.cyber.ads.application.AdsApplication
@@ -14,7 +15,7 @@ class Application : AdsApplication(), ActivityLifecycleCallbacks {
         registerActivityLifecycleCallbacks(this)
         SolarUtils.init(
             context = this,
-            appKey = "key",
+            appKey = "afbdf8ebc696df7f",
             debug = true
         )
         SolarUtils.setDebugPolicy(

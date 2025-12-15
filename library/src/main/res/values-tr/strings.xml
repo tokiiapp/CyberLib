@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">Yükleniyor...</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">Yükleniyor…</string>
     <string name="no_internet">İnternet yok</string>
     <string name="please_check_your_connection">Lütfen bağlantınızı kontrol edin ve tekrar deneyin</string>
     <string name="cancel">İptal etmek</string>
     <string name="retry">Tekrar dene</string>
+    <string name="start">Başlangıç</string>
+    <string name="next">Sonraki</string>
+    <string name="language">Dil</string>
+    <string name="try_again">Tekrar deneyin</string>
+    <string name="uninstall">Kaldır</string>
+    <string name="other">Diğer</string>
+    <string name="failed_open_the_browser">Tarayıcı açılamadı.</string>
+    <string name="confirm_uninstall_message">Eğlenceye katılın ve akıllı, yaratıcı araçları keşfedin; her anı daha iyi hale getiren otomatik efektler, hızlı eylemler ve anında paylaşım!</string>
+    <string name="confirm_uninstall_title">Kullanıcıların %90\'ından fazlası akıllı özellikleri, hızlı performansı ve kolay yaratıcı deneyimi nedeniyle uygulamamızı seviyor.</string>
+    <string name="i_do_not_need_it">Artık bu uygulamaya ihtiyacım yok</string>
+    <string name="did_not_understand">Nasıl kullanılacağını anlamadım</string>
+    <string name="too_many_ads">Çok fazla reklam</string>
+    <string name="feature_does_not_working">Özellik çalışmıyor</string>
+    <string name="issues_encountered_during_usage">Kullanım sırasında karşılaşılan sorunlar</string>
+    <string name="still_uninstall">Hala kaldırmak istiyorum</string>
+    <string name="please_specify_reason">Lütfen nedeninizi belirtin</string>
 </resources>

@@ -11,15 +11,15 @@ import com.cyber.ads.admob.RemoteUtils
 import com.cyber.ads.iap.IapConfig
 import com.cyber.ads.iap.IapListener
 import com.cyber.ads.iap.IapUtils
-import com.cyber.ads.utils.replaceActivity
+import com.cyber.ads.utils.addActivity
 import com.cyber.sample.R
 import com.cyber.sample.RemoteConfig
 import com.cyber.sample.databinding.ActivitySplashBinding
-
+import com.cyber.sample.ui.uninstall.UninstallActivity
 
 @SuppressLint("CustomSplashScreen")
 class SplashActivity : AppCompatActivity() {
-
+    var splash: String? = null
     private val binding by lazy { ActivitySplashBinding.inflate(layoutInflater) }
     private val handler = Handler(Looper.getMainLooper())
 
@@ -33,6 +33,8 @@ class SplashActivity : AppCompatActivity() {
             finish()
             return
         }
+        splash = intent.data?.getQueryParameter("splash")
+            ?: intent.getStringExtra("splash")
         IapUtils.init(
             applicationContext,
             IapConfig(
@@ -61,11 +63,17 @@ class SplashActivity : AppCompatActivity() {
     private fun initData() {
         RemoteUtils.init(this, R.xml.remote_config_defaults) {
             AdmobUtils.setupCMP(this) {
-                AdmobUtils.initAdmob(this, isDebug = true)
-                AdmobUtils.loadNativeLanguage(
-                    this,
-                    RemoteConfig.NATIVE_LANGUAGE,
-                    object : AdmobUtils.NativeCallback() {})
+                AdmobUtils.initAdmob(this, isDebug = false)
+                if (splash != "uninstall") {
+                    AdmobUtils.loadNativeLanguage(
+                        this,
+                        RemoteConfig.NATIVE_LANGUAGE,
+                        object : AdmobUtils.NativeCallback() {})
+                    AdmobUtils.loadNative(
+                        this,
+                        RemoteConfig.NATIVE_LANGUAGE_SMALL,
+                        object : AdmobUtils.NativeCallback() {})
+                }
                 showInterOrAoa()
             }
         }
@@ -81,13 +89,26 @@ class SplashActivity : AppCompatActivity() {
                 }
 
                 override fun onInterFailed(error: String) {
-                    handler.postDelayed({ nextActivity() }, 100)
+                    handler.postDelayed({ nextActivity() }, 2000)
                 }
             })
+
+
     }
 
     private fun nextActivity() {
-        replaceActivity<LanguageActivity>()
+        if (!isFinishing) {
+            if (intent.action != Intent.ACTION_VIEW) {
+                addActivity<LanguageActivity> { putExtra("fromSplash", true) }
+                finish()
+                return
+            }
+            if (splash == "uninstall") {
+                addActivity<UninstallActivity>()
+                finish()
+            }
+
+        }
     }
 
 }

@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">読み込み中...</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">読み込み中…</string>
     <string name="no_internet">インターネットなし</string>
     <string name="please_check_your_connection">接続を確認してもう一度お試しください</string>
     <string name="cancel">キャンセル</string>
     <string name="retry">リトライ</string>
+    <string name="start">始める</string>
+    <string name="next">次</string>
+    <string name="language">言語</string>
+    <string name="try_again">もう一度やり直してください</string>
+    <string name="uninstall">アンインストール</string>
+    <string name="other">他の</string>
+    <string name="failed_open_the_browser">ブラウザを開けませんでした。</string>
+    <string name="confirm_uninstall_message">自動エフェクト、クイックアクション、インスタント共有など、あらゆる瞬間をより良いものにするスマートでクリエイティブなツールを、ぜひ楽しみながら探してみてください。</string>
+    <string name="confirm_uninstall_title">90% 以上のユーザーが、スマートな機能、高速なパフォーマンス、そして簡単にクリエイティブな体験ができる当社のアプリを気に入っています。</string>
+    <string name="i_do_not_need_it">このアプリはもう必要ありません</string>
+    <string name="did_not_understand">使い方が分かりませんでした</string>
+    <string name="too_many_ads">広告が多すぎる</string>
+    <string name="feature_does_not_working">機能が動作していません</string>
+    <string name="issues_encountered_during_usage">使用中に発生した問題</string>
+    <string name="still_uninstall">それでもアンインストールしたい</string>
+    <string name="please_specify_reason">理由を明記してください</string>
 </resources>

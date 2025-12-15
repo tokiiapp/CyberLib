@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="LOADING">लोड हो रहा है...</string>
+    <string name="intro1">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro1_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro2_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="intro3_content">xxxxxxxxxxxxxxxxxxx</string>
+    <string name="LOADING">लोड हो रहा है…</string>
     <string name="no_internet">कोई इंटरनेट नहीं</string>
     <string name="please_check_your_connection">अपने कनेक्शन की जांच करें और पुन: प्रयास करें</string>
     <string name="cancel">रद्द करना</string>
     <string name="retry">पुन: प्रयास करें</string>
+    <string name="start">शुरू</string>
+    <string name="next">अगला</string>
+    <string name="language">भाषा</string>
+    <string name="try_again">पुनः प्रयास करें</string>
+    <string name="uninstall">अनइंस्टॉल करें</string>
+    <string name="other">अन्य</string>
+    <string name="failed_open_the_browser">ब्राउज़र खोलने में विफल.</string>
+    <string name="confirm_uninstall_message">मज़े में शामिल हों और स्मार्ट, रचनात्मक उपकरणों का अन्वेषण करें - स्वचालित प्रभाव, त्वरित क्रियाएं, और तत्काल साझाकरण जो हर पल को बेहतर बनाते हैं!</string>
+    <string name="confirm_uninstall_title">90% से अधिक उपयोगकर्ता हमारे ऐप को इसके स्मार्ट फीचर्स, तेज प्रदर्शन और आसान रचनात्मक अनुभव के लिए पसंद करते हैं।</string>
+    <string name="i_do_not_need_it">मुझे अब इस ऐप की ज़रूरत नहीं है</string>
+    <string name="did_not_understand">मुझे समझ नहीं आया कि इसका इस्तेमाल कैसे करूँ</string>
+    <string name="too_many_ads">बहुत सारे विज्ञापन</string>
+    <string name="feature_does_not_working">सुविधा काम नहीं कर रही है</string>
+    <string name="issues_encountered_during_usage">उपयोग के दौरान आने वाली समस्याएँ</string>
+    <string name="still_uninstall">अभी भी अनइंस्टॉल करना चाहते हैं</string>
+    <string name="please_specify_reason">कृपया अपना कारण बताएं</string>
 </resources>

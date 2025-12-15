@@ -4,10 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.cyber.ads.R
 import com.cyber.ads.adjust.AdjustUtils
-import com.cyber.ads.utils.logE
-import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdValue
-import com.google.android.gms.ads.LoadAdError
 import com.reyun.solar.engine.AdType
 import com.reyun.solar.engine.SolarEngineConfig
 import com.reyun.solar.engine.SolarEngineManager
@@ -24,9 +21,9 @@ object SolarUtils {
 
     private val isInitialized = AtomicBoolean(false)
 
-    private var isDebugSolar: Boolean = false
+    private var isDebugSolar: Boolean = true
     private var currentChannel: String = "googleplay"
-    private var includeZeroRevenueInDebug: Boolean = true
+    private var includeZeroRevenueInDebug: Boolean = false
 
     @JvmField
     var userId: String? = null
@@ -73,9 +70,9 @@ object SolarUtils {
                 if (code == 0) {
                     isInitialized.set(true)
                     appId = context.getString(R.string.admob_app_id) ?: context.packageName
-                    Log.e(TAG, "SolarEngine admob_app_id: " + context.getString(R.string.admob_app_id))
+
                     userId = SolarEngineManager.getInstance().distinctId
-                    Log.e(TAG, "SolarEngine initialized (debug=$debug, channel=$currentChannel)")
+                    Log.d(TAG, "SolarEngine initialized (debug=$debug, channel=$currentChannel)")
                 } else {
                     Log.e(TAG, "SolarEngine init failed, code=$code")
                 }
@@ -142,12 +139,12 @@ object SolarUtils {
         customProperties: JSONObject? = null
     ) {
         if (!ensureInitialized()) return
-        logE("trackAdImpression")
+
         runCatching {
             val micros = ad.valueMicros
             val isZeroRevenue = micros <= 0
             if (isZeroRevenue && !(isDebugSolar && includeZeroRevenueInDebug)) {
-                Log.e(TAG, "Skip Solar ad impression: valueMicros=$micros (debug=$isDebugSolar)")
+                Log.d(TAG, "Skip Solar ad impression: valueMicros=$micros (debug=$isDebugSolar)")
                 return
             }
 
@@ -180,7 +177,7 @@ object SolarUtils {
             )
 
             SolarEngineManager.getInstance().trackAdImpression(event)
-            Log.e(
+            Log.d(
                 TAG,
                 "Solar ad imp tracked: unit=${adUnit.orEmpty()}, fmt=${format.lowercase()}, ecpm=${
                     "%.6f".format(
@@ -246,7 +243,7 @@ object SolarUtils {
                 if (userId != null && !has("user_id")) put("user_id", userId)
             }
             SolarEngineManager.getInstance().track(eventName, payload)
-            Log.e(TAG, "Solar custom event: $eventName (debug=$isDebugSolar)")
+            Log.d(TAG, "Solar custom event: $eventName (debug=$isDebugSolar)")
         }.onFailure { e ->
             Log.e(TAG, "Failed to track Solar event: $eventName", e)
         }
@@ -300,7 +297,7 @@ object SolarUtils {
                 if (extras != null) mergeJson(this, extras)
             }
             SolarEngineManager.getInstance().track("ad_load_failed", props)
-            Log.e(
+            Log.d(
                 TAG,
                 "Solar track ad_load_failed: unit=${adUnit.orEmpty()}, fmt=$format, code=$errorCode"
             )
@@ -337,7 +334,7 @@ object SolarUtils {
                 if (extras != null) mergeJson(this, extras)
             }
             SolarEngineManager.getInstance().track("ad_show_failed", props)
-            Log.e(
+            Log.d(
                 TAG,
                 "Solar track ad_show_failed: unit=${adUnit.orEmpty()}, fmt=$format, code=$errorCode"
             )
@@ -348,7 +345,7 @@ object SolarUtils {
     fun trackAdLoadFailure(
         adUnit: String?,
         format: String,
-        loadAdError: LoadAdError,
+        loadAdError: com.google.android.gms.ads.LoadAdError,
         mediationPlatform: String = DEFAULT_MEDIATION_PLATFORM,
         adNetworkPlatform: String = DEFAULT_AD_NETWORK_PLATFORM,
         latencyMs: Long? = null,
@@ -375,7 +372,7 @@ object SolarUtils {
     fun trackAdShowFailure(
         adUnit: String?,
         format: String,
-        adError: AdError,
+        adError: com.google.android.gms.ads.AdError,
         mediationPlatform: String = DEFAULT_MEDIATION_PLATFORM,
         adNetworkPlatform: String = DEFAULT_AD_NETWORK_PLATFORM,
         extras: JSONObject? = null

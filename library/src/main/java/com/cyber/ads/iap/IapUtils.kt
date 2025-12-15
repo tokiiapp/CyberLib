@@ -7,20 +7,20 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.LiveData
 import com.cyber.ads.R
+import com.cyber.ads.utils.toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
 
 object IapUtils {
     /** Gọi 1 lần ở Application/Splash. Truyền list productId (inapp/subs). */
     @JvmStatic
-    fun init(
-        context: Context,
-        config: IapConfig,
-        listener: IapListener? = null
-    ) = IapHelper.get(context).init(config, listener)
+    fun init(context: Context, config: IapConfig, listener: IapListener? = null) {
+        IapHelper.get(context).init(config, listener)
+    }
 
     /** Query lại ProductDetails & cache. */
     @JvmStatic
@@ -49,11 +49,9 @@ object IapUtils {
 
     /** Mua theo productId. Với SUBS có nhiều offer, truyền offerToken nếu muốn. */
     @JvmStatic
-    fun purchase(
-        activity: Activity,
-        productId: String,
-        offerToken: String? = null
-    ) = IapHelper.instanceOrNull()?.launchPurchase(activity, productId, offerToken)
+    fun purchase(activity: Activity, productId: String, offerToken: String? = null) {
+        IapHelper.instanceOrNull()?.launchPurchase(activity, productId, offerToken)
+    }
 
     /** Khôi phục quyền lợi: trả về list productId đang active. */
     @JvmStatic
@@ -70,8 +68,7 @@ object IapUtils {
 
     /** Quan sát trạng thái để cập nhật UI. */
     @JvmStatic
-    fun observeState(): LiveData<IapState>? =
-        IapHelper.instanceOrNull()?.state
+    fun observeState(): LiveData<IapState>? = IapHelper.instanceOrNull()?.state
 
     /** Mua. */
     @JvmStatic
@@ -81,23 +78,14 @@ object IapUtils {
     }
 
     @JvmStatic
-    fun getDisplayPrice(productId: String): MutableList<Map<String, Any?>>? =
-        IapHelper.instanceOrNull()?.getDisplayPrice(productId)
+    fun getDisplayPrice(productId: String): MutableList<Map<String, Any?>>? = IapHelper.instanceOrNull()?.getDisplayPrice(productId)
 
     @JvmStatic
-    fun openManageSubscription(
-        context: Context,
-        packageName: String,
-    ) {
+    fun openManageSubscription(context: Context, packageName: String) {
         try {
-            val uri =
-                Uri.parse("https://play.google.com/store/account/subscriptions?&package=$packageName")
-            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+            context.startActivity(Intent(Intent.ACTION_VIEW, "https://play.google.com/store/account/subscriptions?&package=$packageName".toUri()))
         } catch (_: Exception) {
-            Toast.makeText(
-                context,
-                context.getString(R.string.can_t_open_the_browser), Toast.LENGTH_SHORT
-            ).show()
+            context.toast(context.getString(R.string.failed_open_the_browser))
         }
     }
 

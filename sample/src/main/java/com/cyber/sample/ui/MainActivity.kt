@@ -2,8 +2,13 @@ package com.cyber.sample.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import com.cyber.ads.admob.AdmobUtils
+import com.cyber.ads.admob.RemoteUtils
 import com.cyber.ads.utils.addActivity
+import com.cyber.ads.utils.log
+import com.cyber.ads.utils.prefs
+import com.cyber.ads.utils.setupInAppUpdate
 import com.cyber.ads.utils.toast
 import com.cyber.sample.RemoteConfig
 import com.cyber.sample.databinding.ActivityMainBinding
@@ -22,8 +27,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-
-//        log("home2:${RemoteConfig.BANNER_HOME_2.enable()} || top3:${RemoteConfig.BANNER_HOME_TOP3.enable()}")
+        setupInAppUpdate(this)
 
         binding.btnLoadShowBanner.setOnClickListener {
             AdmobUtils.loadAndShowBanner(
@@ -37,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnLoadShowBannerCollap.setOnClickListener {
             AdmobUtils.loadAndShowBanner(
                 this,
-                RemoteConfig.BANNER_HOME_2,
+                RemoteConfig.BANNER_HOME,
                 binding.flBanner,
                 object : AdmobUtils.BannerCallback() {},
                 object : AdmobUtils.NativeCallback() {})
@@ -80,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnLoadShowNative.setOnClickListener {
-            AdmobUtils.loadAndShowNative(this, RemoteConfig.NATIVE_HOME, binding.flNative, object : AdmobUtils.NativeCallback() {})
+            AdmobUtils.loadAndShowNative(this, RemoteConfig.NATIVE_HAHA.anchorTop(), binding.flNative, object : AdmobUtils.NativeCallback() {})
         }
 
         binding.btnLoadShowNativeCollapTop.setOnClickListener {
@@ -114,7 +118,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-//        RemoteUtils.dialogNoInternet(this) { toast("Network Connected") }.show()
+        RemoteUtils.dialogNoInternet(this) { toast("Network Connected") }.show()
     }
 
 }

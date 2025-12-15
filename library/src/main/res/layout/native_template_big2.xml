@@ -10,13 +10,13 @@
         android:id="@+id/ad_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="50dp"
-        android:padding="8dp">
+        android:minHeight="50dp">
 
         <com.google.android.gms.ads.nativead.MediaView
             android:id="@+id/ad_media"
             android:layout_width="0dp"
             android:layout_height="@dimen/_150sdp"
+            android:layout_marginTop="@dimen/_4sdp"
             android:layout_gravity="fill"
             android:layout_marginHorizontal="@dimen/_5sdp"
             app:layout_constraintEnd_toEndOf="parent"

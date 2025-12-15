@@ -109,10 +109,8 @@ class PremiumActivity : AppCompatActivity() {
     }
 
     private fun bindPrices() {
-        binding.tvPriceMonth.text =
-            IapUtils.getFormattedPrice(pidMonthly) ?: "_"
-        binding.tvPriceYear.text =
-            IapUtils.getFormattedPrice(pidYearly) ?: "_"
+        binding.tvPriceMonth.text = IapUtils.getFormattedPrice(pidMonthly) ?: "_"
+        binding.tvPriceYear.text = IapUtils.getFormattedPrice(pidYearly) ?: "_"
         setTrial()
     }
 
@@ -123,8 +121,7 @@ class PremiumActivity : AppCompatActivity() {
         Toast.makeText(this, getString(R.string.you_have_purchased), Toast.LENGTH_SHORT).show()
         AdmobUtils.isPremium = true
         startActivity(
-            Intent(this, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
         )
     }
 
