@@ -1,6 +1,8 @@
 #include <jni.h>
 #include <string>
 #include <cstring>
+#include <algorithm> // Mới thêm: Bắt buộc để dùng std::transform
+#include <cctype>    // Mới thêm: Bắt buộc để dùng std::tolower
 
 static int hx(char x) {
     if (x >= '0' && x <= '9') return x - '0';
@@ -9,7 +11,8 @@ static int hx(char x) {
     return -1;
 }
 
-extern "C" jboolean
+// Đã thêm JNIEXPORT và JNICALL
+extern "C" JNIEXPORT jboolean JNICALL
 Java_com_cyber_ads_utils_TextUtils_contains(
         JNIEnv *e,
         jobject o,
@@ -93,7 +96,8 @@ Java_com_cyber_ads_utils_TextUtils_contains(
     return JNI_FALSE;
 }
 
-extern "C" jboolean
+// Đã thêm JNIEXPORT và JNICALL
+extern "C" JNIEXPORT jboolean JNICALL
 Java_com_cyber_ads_utils_TextUtils_isNotNull(
         JNIEnv *e,
         jobject o,

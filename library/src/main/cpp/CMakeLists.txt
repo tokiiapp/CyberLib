@@ -7,8 +7,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s -fvisibility=hidden")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s -fvisibility=hidden")
 
 # Mark JNI functions as default visibility
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJNIEXPORT=__attribute__((visibility(\"default\")))")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DJNIEXPORT=__attribute__((visibility(\"default\")))")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJNIEXPORT=__attribute__((visibility(\"default\")))")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DJNIEXPORT=__attribute__((visibility(\"default\")))")
 
 add_library(
         textutils
