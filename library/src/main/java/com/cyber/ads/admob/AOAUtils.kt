@@ -15,6 +15,7 @@ import android.widget.TextView
 import com.airbnb.lottie.LottieAnimationView
 import com.cyber.ads.R
 import com.cyber.ads.adjust.AdjustUtils
+import com.cyber.ads.appsflyer.AppsFlyerUtils
 import com.cyber.ads.remote.SplashHolder
 import com.cyber.ads.solar.SolarUtils
 import com.cyber.ads.utils.Helper
@@ -196,6 +197,8 @@ class AOAUtils(private val activity: Activity, val holder: SplashHolder,val inde
                                 adUnit = adUnitId,
                                 format = "app_open"
                             )
+                            val adapterInfo = appOpenAd?.responseInfo?.loadedAdapterResponseInfo
+                            AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "AppOpen")
                             AdjustUtils.postRevenueAdjust(activity, it, adUnitId)
 
                         }

@@ -10,6 +10,7 @@
 -keep class com.cyber.ads.admob.RemoteUtils { *; }
 -keep class com.cyber.ads.adjust.AdjustUtils { *; }
 -keep class com.cyber.ads.solar.SolarUtils { *; }
+-keep class com.cyber.ads.appsflyer.AppsFlyerUtils { *; }
 -keep class com.cyber.ads.application.AdsApplication { *; }
 -keep class com.cyber.ads.remote.** { *; }
 -keep class com.cyber.ads.admob.OnResumeUtils { *; }
@@ -47,3 +48,8 @@
 # Nếu dùng Adjust hoặc Firebase cũng phải thêm
 -keep class com.adjust.** { *; }
 -keep class com.google.firebase.** { *; }
+
+#appsflyer
+-keep class com.appsflyer.** { *; }
+-keep class com.appsflyer.adrevenue.** { *; }
+-keep class kotlin.jvm.internal.** { *; }

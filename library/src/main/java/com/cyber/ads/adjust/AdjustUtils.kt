@@ -55,7 +55,7 @@ object AdjustUtils {
 
         if(AdmobUtils.isTesting) return
 
-        postRevenueFacebook(context, revenueValue, ad.currencyCode)
+//        postRevenueFacebook(context, revenueValue, ad.currencyCode)
 
         val adjustAdRevenue = AdjustAdRevenue("admob_sdk")
         adjustAdRevenue.setRevenue(revenueValue, ad.currencyCode)

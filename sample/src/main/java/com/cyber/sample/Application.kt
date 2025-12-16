@@ -7,11 +7,13 @@ import android.util.Log
 import android.view.View
 import com.cyber.ads.adjust.AdjustUtils
 import com.cyber.ads.application.AdsApplication
+import com.cyber.ads.appsflyer.AppsFlyerUtils
 import com.cyber.ads.solar.SolarUtils
 
 class Application : AdsApplication(), ActivityLifecycleCallbacks {
     override fun onCreateApplication() {
-        AdjustUtils.initAdjust(this, "", false)
+        AppsFlyerUtils.initAppsFlyer(this,"",true)
+        AdjustUtils.initAdjust(this, "", true)
         registerActivityLifecycleCallbacks(this)
         SolarUtils.init(
             context = this,

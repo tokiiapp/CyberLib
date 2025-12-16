@@ -20,6 +20,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import com.cyber.ads.R
 import com.cyber.ads.adjust.AdjustUtils
 import com.cyber.ads.admob.AdmobUtils.dismissAdDialog
+import com.cyber.ads.appsflyer.AppsFlyerUtils
 import com.cyber.ads.remote.APP_OPEN_TEST_ID
 import com.cyber.ads.solar.SolarUtils
 import com.cyber.ads.utils.Helper
@@ -145,6 +146,8 @@ object OnResumeUtils : ActivityLifecycleCallbacks, DefaultLifecycleObserver {
                         adUnit = appResumeAdId,
                         format = "app_open"
                     )
+                    val adapterInfo = ad.responseInfo.loadedAdapterResponseInfo
+                    AppsFlyerUtils.postRevenueAppsFlyer(it, appResumeAdId, adapterInfo, "AppOpen")
                     AdjustUtils.postRevenueAdjust(myApplication!!, it, appResumeAdId)
 
                 }

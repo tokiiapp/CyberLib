@@ -34,6 +34,7 @@ import com.cyber.ads.adjust.AdjustUtils
 import com.cyber.ads.admob.NativeHelper.Companion.populateNativeAdView
 import com.cyber.ads.admob.NativeHelper.Companion.populateNativeAdViewCollap
 import com.cyber.ads.admob.NativeHelper.Companion.populateNativeAdViewFull
+import com.cyber.ads.appsflyer.AppsFlyerUtils
 import com.cyber.ads.cmp.GoogleMobileAdsConsentManager
 import com.cyber.ads.custom.LoadingSize
 import com.cyber.ads.remote.AdUnit
@@ -308,6 +309,8 @@ object AdmobUtils {
                                 adUnit = interstitialAd.adUnitId,
                                 format = "interstitial"
                             )
+                            val adapterInfo = interstitialAd.responseInfo.loadedAdapterResponseInfo
+                            AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Interstitial")
                             AdjustUtils.postRevenueAdjust(activity, it, interstitialAd.adUnitId)
 
                         }
@@ -513,7 +516,7 @@ object AdmobUtils {
                 logE("Error showing loading shimmer: ${e.message}")
             }
         }
-        
+
         fun hideLoadingShimmer() {
             try {
                 shimmerLoadingView?.stopShimmer()
@@ -571,76 +574,76 @@ object AdmobUtils {
                                     callback.onInterClosed()
                                 }
                             })
-                        } else {
-                            if (singleInterHolder.isNativeLoading) {
-                                showLoadingShimmer()
-                                singleInterHolder.nativeAd.observe(activity) { ad: NativeAd? ->
-                                    if (ad != null && !activity.isFinishing && shimmerLoadingView != null) {
-                                        hideLoadingShimmer()
-                                        if (singleInterHolder.waitTime > 0) {
-                                            activity.lifecycleScope.launch(Dispatchers.Main) {
-                                                tvTimer.visible()
-                                                val timeOut = singleInterHolder.waitTime
-                                                for (i in timeOut downTo 0) {
-                                                    tvTimer.text = i.toString()
-                                                    delay(1000)
-                                                }
-                                                tvTimer.gone()
-                                                tvTimer.text = timeOut.toString()
+                    } else {
+                        if (singleInterHolder.isNativeLoading) {
+                            showLoadingShimmer()
+                            singleInterHolder.nativeAd.observe(activity) { ad: NativeAd? ->
+                                if (ad != null && !activity.isFinishing && shimmerLoadingView != null) {
+                                    hideLoadingShimmer()
+                                    if (singleInterHolder.waitTime > 0) {
+                                        activity.lifecycleScope.launch(Dispatchers.Main) {
+                                            tvTimer.visible()
+                                            val timeOut = singleInterHolder.waitTime
+                                            for (i in timeOut downTo 0) {
+                                                tvTimer.text = i.toString()
                                                 delay(1000)
-                                                btnClose.visible()
                                             }
-                                        } else {
+                                            tvTimer.gone()
+                                            tvTimer.text = timeOut.toString()
+                                            delay(1000)
                                             btnClose.visible()
                                         }
-                                        destroyBannerCollapView()
-                                        performShowNativeFull(
-                                            activity,
-                                            viewGroup,
-                                            singleInterHolder,
-                                            object : NativeCallbackSimple() {
-                                                override fun onNativeLoaded() {}
-                                                override fun onNativeFailed(error: String) {
-                                                    container.gone()
-                                                    runCatching { decorView.removeView(container) }
-                                                    OnResumeUtils.setEnableOnResume(true)
-                                                    singleInterHolder.nativeAd.removeObservers(activity)
-                                                    singleInterHolder.nativeAd.value = null
-                                                    callback.onInterClosed()
-                                                }
-                                            })
-                                        // Remove observer after handling
-                                        singleInterHolder.nativeAd.removeObservers(activity)
+                                    } else {
+                                        btnClose.visible()
                                     }
+                                    destroyBannerCollapView()
+                                    performShowNativeFull(
+                                        activity,
+                                        viewGroup,
+                                        singleInterHolder,
+                                        object : NativeCallbackSimple() {
+                                            override fun onNativeLoaded() {}
+                                            override fun onNativeFailed(error: String) {
+                                                container.gone()
+                                                runCatching { decorView.removeView(container) }
+                                                OnResumeUtils.setEnableOnResume(true)
+                                                singleInterHolder.nativeAd.removeObservers(activity)
+                                                singleInterHolder.nativeAd.value = null
+                                                callback.onInterClosed()
+                                            }
+                                        })
+                                    // Remove observer after handling
+                                    singleInterHolder.nativeAd.removeObservers(activity)
                                 }
-                                
-                                // Set timeout to hide shimmer if native fails after some time
-                                val timeoutHandler = Handler(Looper.getMainLooper())
-                                val timeoutRunnable = Runnable {
-                                    if (shimmerLoadingView != null && !singleInterHolder.isNativeReady()) {
-                                        hideLoadingShimmer()
-                                        container.gone()
-                                        runCatching { decorView.removeView(container) }
-                                        OnResumeUtils.setEnableOnResume(true)
-                                        singleInterHolder.nativeAd.removeObservers(activity)
-                                        singleInterHolder.nativeAd.value = null
-                                        logE("Native Inter timeout waiting for native")
-                                        callback.onInterClosed()
-                                    }
-                                }
-                                timeoutHandler.postDelayed(timeoutRunnable, 15000) // 15 second timeout
-                            } else {
-                                // Native is not loading and not ready - likely failed, hide container
-                                hideLoadingShimmer()
-                                container.gone()
-                                runCatching { decorView.removeView(container) }
-                                OnResumeUtils.setEnableOnResume(true)
-                                singleInterHolder.nativeAd.removeObservers(activity)
-                                singleInterHolder.nativeAd.value = null
-                                logE("Native Inter not ready and not loading")
-                                callback.onInterClosed()
                             }
+
+                            // Set timeout to hide shimmer if native fails after some time
+                            val timeoutHandler = Handler(Looper.getMainLooper())
+                            val timeoutRunnable = Runnable {
+                                if (shimmerLoadingView != null && !singleInterHolder.isNativeReady()) {
+                                    hideLoadingShimmer()
+                                    container.gone()
+                                    runCatching { decorView.removeView(container) }
+                                    OnResumeUtils.setEnableOnResume(true)
+                                    singleInterHolder.nativeAd.removeObservers(activity)
+                                    singleInterHolder.nativeAd.value = null
+                                    logE("Native Inter timeout waiting for native")
+                                    callback.onInterClosed()
+                                }
+                            }
+                            timeoutHandler.postDelayed(timeoutRunnable, 15000) // 15 second timeout
+                        } else {
+                            // Native is not loading and not ready - likely failed, hide container
+                            hideLoadingShimmer()
+                            container.gone()
+                            runCatching { decorView.removeView(container) }
+                            OnResumeUtils.setEnableOnResume(true)
+                            singleInterHolder.nativeAd.removeObservers(activity)
+                            singleInterHolder.nativeAd.value = null
+                            logE("Native Inter not ready and not loading")
+                            callback.onInterClosed()
                         }
+                    }
                 }
 
                 override fun onInterFailed(error: String) {
@@ -1064,40 +1067,44 @@ object AdmobUtils {
         val mAdView = AdView(activity).apply {
             adUnitId = adId
             setAdSize(adSize)
-            adListener = object : AdListener() {
-                override fun onAdLoaded() {
-                    log("Banner Loaded with index $index")
-                    onPaidEventListener = OnPaidEventListener { adValue ->
-                        SolarUtils.trackAdImpression(
-                            ad = adValue,
-                            adUnit = adUnitId,
-                            format = "banner"
-                        )
-                        AdjustUtils.postRevenueAdjust(activity, adValue, adUnitId)
 
-                    }
-                    shimmerFrameLayout?.stopShimmer()
-                    runCatching {
-                        viewGroup.removeAllViews()
-                        viewGroup.addView(this@apply)
-                        viewGroup.addView(bannerDivider(activity, holder.anchor))
-                    }
-                    callback.onBannerLoaded(adSize)
-                }
-
-                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    logE("BannerFailed with index $index: ${loadAdError.message}")
-                    val latency = nowMs() - loadStart
-                    SolarUtils.trackAdLoadFailure(
+        }
+        val adapterInfo = mAdView.responseInfo?.loadedAdapterResponseInfo
+        mAdView.adListener = object : AdListener() {
+            override fun onAdLoaded() {
+                log("Banner Loaded with index $index")
+                mAdView.onPaidEventListener = OnPaidEventListener { adValue ->
+                    SolarUtils.trackAdImpression(
+                        ad = adValue,
                         adUnit = adId,
-                        format = formatNameForSolar("banner"),
-                        loadAdError = loadAdError,
-                        latencyMs = latency,
-                        waterfallIndex = index
+                        format = "banner"
                     )
-                    shimmerFrameLayout?.stopShimmer()
-                    onFailed()
+                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Banner")
+
+                    AdjustUtils.postRevenueAdjust(activity, adValue, adId)
+
                 }
+                shimmerFrameLayout?.stopShimmer()
+                runCatching {
+                    viewGroup.removeAllViews()
+                    viewGroup.addView(mAdView)
+                    viewGroup.addView(bannerDivider(activity, holder.anchor))
+                }
+                callback.onBannerLoaded(adSize)
+            }
+
+            override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                logE("BannerFailed with index $index: ${loadAdError.message}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("banner"),
+                    loadAdError = loadAdError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
+                shimmerFrameLayout?.stopShimmer()
+                onFailed()
             }
         }
         adRequest?.let {
@@ -1144,6 +1151,8 @@ object AdmobUtils {
                     adUnit = adId,
                     format = "native"
                 )
+                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
+                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
 
             }
@@ -1208,12 +1217,16 @@ object AdmobUtils {
         adView.adListener = object : AdListener() {
             override fun onAdLoaded() {
                 log("BannerCollap Loaded with index $index")
+                val adapterInfo = adView.responseInfo?.loadedAdapterResponseInfo
+
                 adView.onPaidEventListener = OnPaidEventListener { adValue ->
                     SolarUtils.trackAdImpression(
                         ad = adValue,
                         adUnit = adView.adUnitId,
                         format = "banner"
                     )
+                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Banner")
+
                     AdjustUtils.postRevenueAdjust(activity, adValue, adView.adUnitId)
 
                 }
@@ -1306,6 +1319,8 @@ object AdmobUtils {
                     adUnit = adId,
                     format = "native"
                 )
+                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
+                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
 
             }
@@ -3041,6 +3056,8 @@ object AdmobUtils {
                         adUnit = interstitialAd.adUnitId,
                         format = "interstitial"
                     )
+                    val adapterInfo = interstitialAd.responseInfo.loadedAdapterResponseInfo
+                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Interstitial")
                     AdjustUtils.postRevenueAdjust(context, adValue, interstitialAd.adUnitId)
 
                 }
@@ -3293,6 +3310,9 @@ object AdmobUtils {
                                 adUnit = interstitialAd.adUnitId,
                                 format = "interstitial"
                             )
+                            val adapterInfo = interstitialAd.responseInfo.loadedAdapterResponseInfo
+                            AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Interstitial")
+
                             AdjustUtils.postRevenueAdjust(activity, it, interstitialAd.adUnitId)
 
                         }
@@ -3444,44 +3464,49 @@ object AdmobUtils {
 
         val adId = adIds[index]
         val loadStart = nowMs()
+        val adSize = getBannerSize(activity)
         val mAdView = AdView(activity).apply {
             adUnitId = adId
-            val adSize = getBannerSize(activity)
             setAdSize(adSize)
-            adListener = object : AdListener() {
-                override fun onAdLoaded() {
-                    log("Banner Loaded")
-                    onPaidEventListener = OnPaidEventListener { adValue ->
-                        SolarUtils.trackAdImpression(
-                            ad = adValue,
-                            adUnit = adUnitId,
-                            format = "banner"
-                        )
-                        AdjustUtils.postRevenueAdjust(activity, adValue, adUnitId)
 
-                    }
-                    shimmerFrameLayout?.stopShimmer()
-                    viewGroup.removeAllViews()
-                    viewGroup.addView(this@apply)
-                    viewGroup.addView(bannerDivider(activity, holder.anchor))
-                    callback.onBannerLoaded(adSize)
-                    postRefreshDelayed(activity, holder) {
-                        performLoadAndShowBanner(activity, holder, viewGroup, callback)
-                    }
-                }
+        }
+        val adapterInfo = mAdView.responseInfo?.loadedAdapterResponseInfo
 
-                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    logE("BannerFailed: ${loadAdError.message}")
-                    val latency = nowMs() - loadStart
-                    SolarUtils.trackAdLoadFailure(
+        mAdView.adListener = object : AdListener() {
+            override fun onAdLoaded() {
+                log("Banner Loaded")
+                mAdView.onPaidEventListener = OnPaidEventListener { adValue ->
+                    SolarUtils.trackAdImpression(
+                        ad = adValue,
                         adUnit = adId,
-                        format = formatNameForSolar("banner"),
-                        loadAdError = loadAdError,
-                        latencyMs = latency,
-                        waterfallIndex = index
+                        format = "banner"
                     )
-                    tryLoadAndShowBanner(activity, holder, viewGroup, callback, index + 1)
+                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Banner")
+
+                    AdjustUtils.postRevenueAdjust(activity, adValue, adId)
+
                 }
+                shimmerFrameLayout?.stopShimmer()
+                viewGroup.removeAllViews()
+                viewGroup.addView(mAdView)
+                viewGroup.addView(bannerDivider(activity, holder.anchor))
+                callback.onBannerLoaded(adSize)
+                postRefreshDelayed(activity, holder) {
+                    performLoadAndShowBanner(activity, holder, viewGroup, callback)
+                }
+            }
+
+            override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                logE("BannerFailed: ${loadAdError.message}")
+                val latency = nowMs() - loadStart
+                SolarUtils.trackAdLoadFailure(
+                    adUnit = adId,
+                    format = formatNameForSolar("banner"),
+                    loadAdError = loadAdError,
+                    latencyMs = latency,
+                    waterfallIndex = index
+                )
+                tryLoadAndShowBanner(activity, holder, viewGroup, callback, index + 1)
             }
         }
         adRequest?.let {
@@ -3564,6 +3589,8 @@ object AdmobUtils {
                         adUnit = adView.adUnitId,
                         format = "banner"
                     )
+                    val adapterInfo = adView.responseInfo?.loadedAdapterResponseInfo
+                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Banner")
                     AdjustUtils.postRevenueAdjust(activity, adValue, adView.adUnitId)
 
                 }
@@ -3724,6 +3751,8 @@ object AdmobUtils {
                         adUnit = rewardedAd.adUnitId,
                         format = "rewarded"
                     )
+                    val adapterInfo = rewardedAd.responseInfo.loadedAdapterResponseInfo
+                    AppsFlyerUtils.postRevenueAppsFlyer(it, adId, adapterInfo, "Rewarded")
                     AdjustUtils.postRevenueAdjust(activity, it, rewardedAd.adUnitId)
 
                 }
@@ -3831,6 +3860,8 @@ object AdmobUtils {
                         adUnit = adId,
                         format = "native"
                     )
+                    val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
+                    AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
                     AdjustUtils.postRevenueAdjust(context, adValue, adId)
 
                 }
@@ -3912,12 +3943,14 @@ object AdmobUtils {
             }
             holder.nativeAd.observe((activity as LifecycleOwner)) { nativeAd ->
                 if (nativeAd != null) {
+                    val adapterInfo = nativeAd?.responseInfo?.loadedAdapterResponseInfo
                     nativeAd.setOnPaidEventListener {
                         SolarUtils.trackAdImpression(
                             ad = it,
                             adUnit = holder.currentAdId,
                             format = "native"
                         )
+                        AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
                         AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
 
                     }
@@ -4036,6 +4069,8 @@ object AdmobUtils {
                     adUnit = adId,
                     format = "native"
                 )
+                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
+                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
 
             }
@@ -4154,6 +4189,8 @@ object AdmobUtils {
                     adUnit = adId,
                     format = "native"
                 )
+                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
+                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
 
             }
@@ -4313,6 +4350,8 @@ object AdmobUtils {
                     adUnit = adId,
                     format = "native"
                 )
+                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
+                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
 
             }
@@ -4473,6 +4512,8 @@ object AdmobUtils {
                     adUnit = adId,
                     format = "native"
                 )
+                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
+                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
 
             }
@@ -4608,6 +4649,8 @@ object AdmobUtils {
                     adUnit = adId,
                     format = "native"
                 )
+                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
+                AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, it, adId)
 
             }
@@ -4693,6 +4736,8 @@ object AdmobUtils {
                         adUnit = adId,
                         format = "native"
                     )
+                    val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
+                    AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
                     AdjustUtils.postRevenueAdjust(context, it, adId)
 
                 }
@@ -4768,12 +4813,16 @@ object AdmobUtils {
 
             holder.nativeAd.observe((context as LifecycleOwner)) { nativeAd: NativeAd? ->
                 if (nativeAd != null) {
+                    val adapterInfo = nativeAd?.responseInfo?.loadedAdapterResponseInfo
+
                     nativeAd.setOnPaidEventListener {
                         SolarUtils.trackAdImpression(
                             ad = it,
                             adUnit = holder.currentAdId,
                             format = "native"
                         )
+                        AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
+
                         AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
 
                     }

@@ -99,5 +99,9 @@ dependencies {
     implementation("com.android.billingclient:billing-ktx:8.0.0")
     //solar
     implementation("com.reyun.solar.engine.oversea:solar-engine-core:1.3.1.1")
+
+    // appsflyer
+    implementation("com.appsflyer:af-android-sdk:6.14.0")
+    implementation("com.appsflyer:adrevenue:6.9.1")
 }
 
