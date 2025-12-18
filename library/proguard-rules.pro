@@ -16,6 +16,7 @@
 -keep class com.cyber.ads.admob.OnResumeUtils { *; }
 -keep class com.cyber.ads.utils.ExtensionKt { *; }
 -keep class com.cyber.ads.custom.LoadingSize { *; }
+-keep public class com.cyber.ads.onboading.** { *; }
 -keep class com.android.billingclient.** { *; }
 -keep public class com.cyber.ads.iap.** { public *; }
 -dontwarn com.android.billingclient.**
