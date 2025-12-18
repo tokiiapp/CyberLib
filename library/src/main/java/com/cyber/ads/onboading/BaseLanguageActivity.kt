@@ -224,6 +224,7 @@ abstract class BaseLanguageActivity : AppCompatActivity() {
     }
 
     companion object {
+        @JvmStatic
         fun currentLanguage(context: Context) = context.prefs().getString("languageCode", null)
         var languages = listOf(
             LanguageModel(R.drawable.hindi, "हिंदी", "hi"),
