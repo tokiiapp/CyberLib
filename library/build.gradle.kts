@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("maven-publish")
 }
 
 android {
@@ -60,6 +61,12 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
 dependencies {
@@ -104,4 +111,19 @@ dependencies {
     implementation("com.appsflyer:af-android-sdk:6.14.0")
     implementation("com.appsflyer:adrevenue:6.9.1")
 }
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                // Lấy component release từ Android build
+                from(components["release"])
 
+                // Cấu hình định danh (Optional với JitPack nhưng nên điền cho rõ)
+                groupId = "com.github.tokiiapp"
+                artifactId = "CyberLib"
+                // Version không cần điền cứng ở đây, JitPack sẽ lấy theo tên Tag (ví dụ 1.0.0)
+            }
+        }
+        // LƯU Ý: Không thêm block repositories {} ở đây
+    }
+}
