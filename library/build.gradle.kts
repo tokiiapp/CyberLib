@@ -3,7 +3,11 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     id("maven-publish")
 }
-
+val androidSourcesJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("sources")
+    // Lấy code từ thư mục main
+    from(android.sourceSets.getByName("main").java.srcDirs)
+}
 android {
     namespace = "com.cyber.ads"
     compileSdk = 35
@@ -121,7 +125,7 @@ afterEvaluate {
                 // Cấu hình định danh (Optional với JitPack nhưng nên điền cho rõ)
                 groupId = "com.github.tokiiapp"
                 artifactId = "CyberLib"
-                // Version không cần điền cứng ở đây, JitPack sẽ lấy theo tên Tag (ví dụ 1.0.0)
+                artifact(androidSourcesJar.get())
             }
         }
         // LƯU Ý: Không thêm block repositories {} ở đây
