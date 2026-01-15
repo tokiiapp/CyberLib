@@ -1,13 +1,13 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
     id("maven-publish")
 }
-val androidSourcesJar by tasks.registering(Jar::class) {
-    archiveClassifier.set("sources")
-    // Lấy code từ thư mục main
-    from(android.sourceSets.getByName("main").java.srcDirs)
-}
+
+val libVersion = "1.2.5"
 android {
     namespace = "com.cyber.ads"
     compileSdk = 35
@@ -65,12 +65,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-//    publishing {
-//        singleVariant("release") {
-//            withSourcesJar()
-//            withJavadocJar()
-//        }
-//    }
+
 }
 
 dependencies {
@@ -115,19 +110,43 @@ dependencies {
     implementation("com.appsflyer:af-android-sdk:6.14.0")
     implementation("com.appsflyer:adrevenue:6.9.1")
 }
+val sourcesJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("sources")
+    from(android.sourceSets["main"].java.srcDirs)  // Đã bao gồm cả kotlin folder
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+
 afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
-                // Lấy component release từ Android build
                 from(components["release"])
 
-                // Cấu hình định danh (Optional với JitPack nhưng nên điền cho rõ)
-                groupId = "com.github.tokiiapp"
-                artifactId = "CyberLib"
-                artifact(androidSourcesJar.get())
+                // Định danh thư viện
+                groupId = "cyber.soft.global" // Bạn có thể đặt tuỳ ý, ví dụ com.github.tokiiapp
+                artifactId = "ads"
+                version = libVersion
             }
         }
-        // LƯU Ý: Không thêm block repositories {} ở đây
+
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                // Đường dẫn đến Repo Github của bạn
+                url = uri("https://maven.pkg.github.com/tokiiapp/CyberLib")
+
+                credentials {
+                    // Code đọc user/pass từ local.properties
+                    val props = Properties()
+                    val localPropsFile = project.rootProject.file("local.properties")
+                    if (localPropsFile.exists()) {
+                        props.load(FileInputStream(localPropsFile))
+                    }
+                    username = props.getProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+                    password = props.getProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+                }
+            }
+        }
     }
 }
