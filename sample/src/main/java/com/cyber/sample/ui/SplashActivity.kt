@@ -63,7 +63,7 @@ class SplashActivity : AppCompatActivity() {
     private fun initData() {
         RemoteUtils.init(this, R.xml.remote_config_defaults) {
             AdmobUtils.setupCMP(this) {
-                AdmobUtils.initAdmob(this, isDebug = false)
+                AdmobUtils.initAdmob(this, isDebug = true)
                 if (splash != "uninstall") {
                     AdmobUtils.loadNativeLanguage(
                         this,

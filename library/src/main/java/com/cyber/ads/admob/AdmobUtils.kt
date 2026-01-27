@@ -67,6 +67,7 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.RequestConfiguration
+import com.google.android.gms.ads.VideoOptions
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
@@ -1069,10 +1070,11 @@ object AdmobUtils {
             setAdSize(adSize)
 
         }
-        val adapterInfo = mAdView.responseInfo?.loadedAdapterResponseInfo
         mAdView.adListener = object : AdListener() {
             override fun onAdLoaded() {
                 log("Banner Loaded with index $index")
+                val adapterInfo = mAdView.responseInfo?.loadedAdapterResponseInfo
+
                 mAdView.onPaidEventListener = OnPaidEventListener { adValue ->
                     SolarUtils.trackAdImpression(
                         ad = adValue,
@@ -1095,6 +1097,7 @@ object AdmobUtils {
 
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                 logE("BannerFailed with index $index: ${loadAdError.message}")
+                mAdView.destroy()
                 val latency = nowMs() - loadStart
                 SolarUtils.trackAdLoadFailure(
                     adUnit = adId,
@@ -1138,6 +1141,10 @@ object AdmobUtils {
 
         val adId = adIds[index]
         val loadStart = nowMs()
+        val adOptions = NativeAdOptions.Builder()
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
+            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
+            .build()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("Native Loaded with index $index")
             shimmerFrameLayout?.stopShimmer()
@@ -1174,7 +1181,7 @@ object AdmobUtils {
                 )
                 onFailed()
             }
-        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
+        }).withNativeAdOptions(adOptions).build()
 
         adRequest?.let {
             log("Loading Native ${holder.key}/$adId (index=$index)")
@@ -1243,6 +1250,7 @@ object AdmobUtils {
 
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 logE("BannerCollapFailed with index $index: ${adError.message}")
+                adView.destroy()
                 val latency = nowMs() - loadStart
                 SolarUtils.trackAdLoadFailure(
                     adUnit = adId,
@@ -1304,6 +1312,10 @@ object AdmobUtils {
         val decorView = activity.window.decorView as ViewGroup
         val tag = "native_collap_view"
         val loadStart = nowMs()
+        val adOptions = NativeAdOptions.Builder()
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
+            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
+            .build()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("NativeCollap Loaded with index $index")
             shimmerFrameLayout?.stopShimmer()
@@ -1386,7 +1398,7 @@ object AdmobUtils {
                 super.onAdClicked()
                 activity.prefs().edit { putInt("collap_click_count", 0) }
             }
-        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
+        }).withNativeAdOptions(adOptions).build()
 
         adRequest?.let {
             log("Loading NativeCollap ${holder.key}/$adId (index=$index)")
@@ -3470,11 +3482,12 @@ object AdmobUtils {
             setAdSize(adSize)
 
         }
-        val adapterInfo = mAdView.responseInfo?.loadedAdapterResponseInfo
 
         mAdView.adListener = object : AdListener() {
             override fun onAdLoaded() {
                 log("Banner Loaded")
+                val adapterInfo = mAdView.responseInfo?.loadedAdapterResponseInfo
+
                 mAdView.onPaidEventListener = OnPaidEventListener { adValue ->
                     SolarUtils.trackAdImpression(
                         ad = adValue,
@@ -3498,6 +3511,7 @@ object AdmobUtils {
 
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                 logE("BannerFailed: ${loadAdError.message}")
+                mAdView.destroy()
                 val latency = nowMs() - loadStart
                 SolarUtils.trackAdLoadFailure(
                     adUnit = adId,
@@ -3608,6 +3622,7 @@ object AdmobUtils {
 
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 logE("BannerCollapFailedToLoad: ${adError.message}")
+                adView.destroy()
                 val latency = nowMs() - loadStart
                 SolarUtils.trackAdLoadFailure(
                     adUnit = adId,
@@ -3656,8 +3671,18 @@ object AdmobUtils {
         val widthPixels = outMetrics.widthPixels.toFloat()
         val density = outMetrics.density
         val adWidth = (widthPixels / density).toInt()
+        val screenWidthDp = widthPixels / density
         // Step 3 - Get adaptive ad size and return for setting on the ad view.
-        return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, adWidth)
+//        return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, adWidth)
+        return if (screenWidthDp >= 728) {
+            // Nếu là Tablet -> Dùng LEADERBOARD (728x90)
+            // Meta hỗ trợ rất tốt size này trên máy tính bảng
+            AdSize.LEADERBOARD
+        } else {
+            // Nếu là Điện thoại -> Dùng BANNER chuẩn (320x50)
+            // Đây là size duy nhất đảm bảo Meta fill rate cao nhất trên điện thoại
+            AdSize.BANNER
+        }
     }
 
     private fun postRefreshDelayed(
@@ -3849,6 +3874,10 @@ object AdmobUtils {
 
         val adId = adIds[index]
         val loadStart = nowMs()
+        val adOptions = NativeAdOptions.Builder()
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
+            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
+            .build()
         val adLoader = AdLoader.Builder(context, adId).forNativeAd { nativeAd ->
             log("Native Loaded")
             holder.isNativeLoading = false
@@ -3889,7 +3918,7 @@ object AdmobUtils {
                 super.onAdClicked()
                 callback.onNativeClicked()
             }
-        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
+        }).withNativeAdOptions(adOptions).build()
         adRequest?.let {
             log("Loading Native ${holder.key}/$adId")
             adLoader.loadAd(it)
@@ -4056,6 +4085,12 @@ object AdmobUtils {
 
         val adId = adIds[index]
         val loadStart = nowMs()
+
+        val adOptions = NativeAdOptions.Builder()
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
+            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
+            .build()
+
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("Native Loaded")
             callback.onNativeReady(nativeAd)
@@ -4099,7 +4134,7 @@ object AdmobUtils {
                 }
             }
 
-        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
+        }).withNativeAdOptions(adOptions).build()
 
         adRequest?.let {
             log("Loading Native ${holder.key}/$adId")
@@ -4175,6 +4210,10 @@ object AdmobUtils {
         val adId = adIds[index]
         val loadStart = nowMs()
         val tag = "native_collap_view"
+        val adOptions = NativeAdOptions.Builder()
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
+            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
+            .build()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("NativeCollap Loaded")
             callback.onNativeReady(nativeAd)
@@ -4261,7 +4300,7 @@ object AdmobUtils {
                 super.onAdClicked()
                 activity.prefs().edit { putInt("collap_click_count", 0) }
             }
-        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
+        }).withNativeAdOptions(adOptions).build()
         adRequest?.let {
             log("Loading Native ${holder.key}/$adId")
             adLoader.loadAd(it)
@@ -4336,6 +4375,10 @@ object AdmobUtils {
         val adId = adIds[index]
         val loadStart = nowMs()
         val tag = "native_collap_view"
+        val adOptions = NativeAdOptions.Builder()
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
+            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
+            .build()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("NativeCollap Loaded")
             callback.onNativeReady(nativeAd)
@@ -4426,7 +4469,7 @@ object AdmobUtils {
                 super.onAdClicked()
                 activity.prefs().edit { putInt("collap_click_count", 0) }
             }
-        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
+        }).withNativeAdOptions(adOptions).build()
         adRequest?.let {
             log("Loading Native ${holder.key}/$adId")
             adLoader.loadAd(it)
@@ -4498,6 +4541,10 @@ object AdmobUtils {
         val loadStart = nowMs()
         val decorView = activity.window.decorView as ViewGroup
         val tag = "native_collap_view"
+        val adOptions = NativeAdOptions.Builder()
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
+            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
+            .build()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("NativeCollap Loaded")
             callback.onNativeReady(nativeAd)
@@ -4584,7 +4631,7 @@ object AdmobUtils {
                 super.onAdClicked()
                 activity.prefs().edit { putInt("collap_click_count", 0) }
             }
-        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
+        }).withNativeAdOptions(adOptions).build()
         adRequest?.let {
             log("Loading Native ${holder.key}/$adId")
             adLoader.loadAd(it)
@@ -4638,6 +4685,10 @@ object AdmobUtils {
 
         val adId = adIds[index]
         val loadStart = nowMs()
+        val adOptions = NativeAdOptions.Builder()
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
+            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
+            .build()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("NativeFull Loaded")
             val adView =
@@ -4673,7 +4724,7 @@ object AdmobUtils {
                 )
                 tryLoadAndShowNativeFull(activity, holder, viewGroup, callback, index + 1)
             }
-        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
+        }).withNativeAdOptions(adOptions).build()
         adRequest?.let {
             log("Loading NativeFull ${holder.key}/$adId")
             adLoader.loadAd(it)
@@ -4723,8 +4774,12 @@ object AdmobUtils {
         val adId = adIds[index]
         val loadStart = nowMs()
         holder.isNativeLoading = true
+        val adOptions = NativeAdOptions.Builder()
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
+            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
+            .build()
         val adLoader = AdLoader.Builder(context, adId)
-            .withNativeAdOptions(NativeAdOptions.Builder().build())
+            .withNativeAdOptions(adOptions)
             .forNativeAd { nativeAd ->
                 log("NativeFull Loaded")
                 holder.isNativeLoading = false
