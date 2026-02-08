@@ -71,7 +71,7 @@ class SplashActivity : AppCompatActivity() {
                         object : AdmobUtils.NativeCallback() {})
                     AdmobUtils.loadNative(
                         this,
-                        RemoteConfig.NATIVE_LANGUAGE_SMALL,
+                        RemoteConfig.NATIVE_SMALL_LANGUAGE,
                         object : AdmobUtils.NativeCallback() {})
                 }
                 showInterOrAoa()

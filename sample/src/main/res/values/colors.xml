@@ -9,5 +9,5 @@
     <color name="color_title_intro">#FFFFFF</color>
     <color name="color_body_intro">#DCDCDC</color>
     <color name="native_button_color">#C73030</color>
-    <color name="color_native_install_button_text">#000000</color>
+    <color name="color_native_install_button_text">#FFFFFF</color>
 </resources>

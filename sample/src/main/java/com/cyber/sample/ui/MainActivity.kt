@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         AdmobUtils.loadAndShowBanner(
-            this, RemoteConfig.BANNER_HOME, binding.flBanner,
+            this, RemoteConfig.BANNER_NORMAL, binding.flBanner,
             object : AdmobUtils.BannerCallback() {},
             object : AdmobUtils.NativeCallback() {})
     }
@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnLoadShowBanner.setOnClickListener {
             AdmobUtils.loadAndShowBanner(
                 this,
-                RemoteConfig.BANNER_HOME_1,
+                RemoteConfig.BANNER_NORMAL,
                 binding.flBanner,
                 object : AdmobUtils.BannerCallback() {},
                 object : AdmobUtils.NativeCallback() {})
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnLoadShowBannerCollap.setOnClickListener {
             AdmobUtils.loadAndShowBanner(
                 this,
-                RemoteConfig.BANNER_HOME,
+                RemoteConfig.BANNER_COLLAP,
                 binding.flBanner,
                 object : AdmobUtils.BannerCallback() {},
                 object : AdmobUtils.NativeCallback() {})
@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnLoadShowNativeBanner.setOnClickListener {
             AdmobUtils.loadAndShowBanner(
                 this,
-                RemoteConfig.BANNER_HOME_3,
+                RemoteConfig.BANNER_HOME1,
                 binding.flBanner,
                 object : AdmobUtils.BannerCallback() {},
                 object : AdmobUtils.NativeCallback() {})
@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnLoadShowNativeCollapBanner.setOnClickListener {
             AdmobUtils.loadAndShowBanner(
                 this,
-                RemoteConfig.BANNER_HOME_4,
+                RemoteConfig.BANNER_HOME2,
                 binding.flBanner,
                 object : AdmobUtils.BannerCallback() {},
                 object : AdmobUtils.NativeCallback() {})
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnLoadShowBannerTop.setOnClickListener {
             AdmobUtils.loadAndShowBanner(
                 this,
-                RemoteConfig.BANNER_HOME_TOP1.anchorTop(),
+                RemoteConfig.BANNER_NORMAL.anchorTop(),
                 binding.flBannerTop,
                 object : AdmobUtils.BannerCallback() {},
                 object : AdmobUtils.NativeCallback() {})
@@ -77,27 +77,27 @@ class MainActivity : AppCompatActivity() {
         binding.btnLoadShowBannerCollapTop.setOnClickListener {
             AdmobUtils.loadAndShowBanner(
                 this,
-                RemoteConfig.BANNER_HOME_TOP2.anchorTop(),
+                RemoteConfig.BANNER_COLLAP.anchorTop(),
                 binding.flBannerTop,
                 object : AdmobUtils.BannerCallback() {},
                 object : AdmobUtils.NativeCallback() {})
         }
 
         binding.btnLoadShowNative.setOnClickListener {
-            AdmobUtils.loadAndShowNative(this, RemoteConfig.NATIVE_HAHA.anchorTop(), binding.flNative, object : AdmobUtils.NativeCallback() {})
+            AdmobUtils.loadAndShowNative(this, RemoteConfig.NATIVE_HOME.anchorTop(), binding.flNative, object : AdmobUtils.NativeCallback() {})
         }
 
         binding.btnLoadShowNativeCollapTop.setOnClickListener {
             AdmobUtils.loadAndShowBanner(
                 this,
-                RemoteConfig.BANNER_HOME_TOP3.anchorTop(),
+                RemoteConfig.BANNER_HOME2.anchorTop(),
                 binding.flBannerTop,
                 object : AdmobUtils.BannerCallback() {},
                 object : AdmobUtils.NativeCallback() {})
         }
 
         binding.btnLoadShowInter.setOnClickListener {
-            AdmobUtils.loadAndShowInterstitial(this, RemoteConfig.INTER_HOME) {
+            AdmobUtils.loadAndShowInterstitial(this, RemoteConfig.INTER_NORMAL) {
                 addActivity<InterDummyActivity>()
             }
         }
@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
             })
         }
         binding.btnLoadShowInterWithNative.setOnClickListener {
-            AdmobUtils.loadAndShowInterstitial(this, RemoteConfig.INTER_HOME_2) {
+            AdmobUtils.loadAndShowInterstitial(this, RemoteConfig.INTER_NATIVE) {
                 addActivity<InterDummyActivity>()
             }
         }

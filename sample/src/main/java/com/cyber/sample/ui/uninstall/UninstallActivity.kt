@@ -6,7 +6,7 @@ import com.cyber.ads.remote.NativeHolder
 import com.cyber.sample.RemoteConfig
 import com.cyber.sample.ui.LanguageActivity
 
-class UninstallActivity(override var nativeUninstall: NativeHolder = RemoteConfig.NATIVE_UNINSTALL) : BaseUninstallActivity() {
+class UninstallActivity(override var nativeUninstall: NativeHolder = RemoteConfig.NATIVE_UNINSTAL) : BaseUninstallActivity() {
 
     override val activityBack: Class<*>
         get() = LanguageActivity::class.java

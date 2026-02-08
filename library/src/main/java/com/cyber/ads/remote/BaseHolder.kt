@@ -6,7 +6,7 @@ import com.cyber.ads.utils.log
 
 const val APP_OPEN_TEST_ID = "ca-app-pub-3940256099942544/9257395921"
 //const val INTER_TEST_ID = "ca-app-pub-3940256099942544/1033173712"
-const val BANNER_TEST_ID = "ca-app-pub-3940256099942544/6300978111"
+const val BANNER_TEST_ID = "ca-app-pub-3940256099942544/9214589741"
 const val BANNER_COLLAP_TEST_ID = "ca-app-pub-3940256099942544/2014213617"
 const val NATIVE_TEST_ID = "ca-app-pub-3940256099942544/2247696110"
 ////const val NATIVE_VIDEO_TEST_ID = "ca-app-pub-3940256099942544/1044960115"
@@ -15,7 +15,7 @@ const val REWARD_TEST_ID = "ca-app-pub-3940256099942544/5224354917"
 ////const val REWARD_INTER_TEST_ID = "ca-app-pub-3940256099942544/5354046379"
 
 //const val APP_OPEN_TEST_ID = "/21775744923/example/app-open"
-const val INTER_TEST_ID = "/21775744923/example/interstitial"
+const val INTER_TEST_ID = "ca-app-pub-3940256099942544/1033173712"
 //const val BANNER_TEST_ID = "/21775744923/example/adaptive-banner"
 //const val BANNER_COLLAP_TEST_ID = "/21775744923/example/adaptive-banner"
 //const val NATIVE_TEST_ID = "/21775744923/example/native"

@@ -18,13 +18,12 @@
         android:src="@drawable/english" />
 
     <TextView
+        style="@style/LanguageNameStyle"
         android:id="@+id/tvName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_weight="1"
-        android:textColor="@color/color_item_language"
-        android:textSize="16sp"
         tools:text="German" />
 
     <RadioButton

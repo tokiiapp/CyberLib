@@ -16,8 +16,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/ic_back"
         app:title="@string/language"
-        app:titleTextAppearance="@style/LanguageTitleStyle"
-        app:titleTextColor="@color/color_title_intro">
+        app:titleTextAppearance="@style/LanguageTitleStyle">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"

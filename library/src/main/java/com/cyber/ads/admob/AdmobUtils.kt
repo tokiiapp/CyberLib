@@ -34,10 +34,8 @@ import com.cyber.ads.adjust.AdjustUtils
 import com.cyber.ads.admob.NativeHelper.Companion.populateNativeAdView
 import com.cyber.ads.admob.NativeHelper.Companion.populateNativeAdViewCollap
 import com.cyber.ads.admob.NativeHelper.Companion.populateNativeAdViewFull
-import com.cyber.ads.appsflyer.AppsFlyerUtils
 import com.cyber.ads.cmp.GoogleMobileAdsConsentManager
 import com.cyber.ads.custom.LoadingSize
-import com.cyber.ads.remote.AdUnit
 import com.cyber.ads.remote.BannerHolder
 import com.cyber.ads.remote.InterHolder
 import com.cyber.ads.remote.NativeHolder
@@ -67,7 +65,6 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.RequestConfiguration
-import com.google.android.gms.ads.VideoOptions
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
@@ -81,6 +78,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
+import kotlin.text.get
 
 object AdmobUtils {
     private var dialogFullScreen: Dialog? = null
@@ -111,23 +109,14 @@ object AdmobUtils {
     @JvmField
     var mBannerCollapView: AdView? = null
     var mRewardedAd: RewardedAd? = null
+    var isEarned = false
 
     //    var mRewardedInterstitialAd: RewardedInterstitialAd? = null
     var mInterstitialAd: InterstitialAd? = null
     var shimmerFrameLayout: ShimmerFrameLayout? = null
     private var adRequest: AdRequest? = null
     private var refreshJob: Job? = null
-    internal var splashSuccess = false
-    const val delayMs = 500L
-    val mainHandler = Handler(Looper.getMainLooper())
-    fun softDelay(run: () -> Unit) {
-        mainHandler.postDelayed(run, delayMs)
-    }
-
-    fun softDelay2(run: () -> Unit) {
-        mainHandler.postDelayed(run, delayMs * 2)
-    }
-
+    private var splashSuccess = false
     private fun nowMs() = SystemClock.elapsedRealtime()
 
     private fun formatNameForSolar(raw: String): String = when (raw.lowercase()) {
@@ -161,8 +150,7 @@ object AdmobUtils {
         isEnableAds = Helper.enableAds()
         MobileAds.initialize(activity) { }
         initListIdTest()
-        val requestConfiguration =
-            RequestConfiguration.Builder().setTestDeviceIds(testDevices).build()
+        val requestConfiguration = RequestConfiguration.Builder().setTestDeviceIds(testDevices).build()
         MobileAds.setRequestConfiguration(requestConfiguration)
         initAdRequest(timeOut)
         OnResumeUtils.init(activity)
@@ -187,1223 +175,63 @@ object AdmobUtils {
         }
     }
 
-    private class IdIndexWrapper(var appOpenIndex: Int, var interIndex: Int, var nativeIndex: Int)
-
-    private class BannerIdIndexWrapper(
-        var bannerIndex: Int = 0,
-        var nativeIndex: Int = 0,
-        var bannerCollapIndex: Int = 0,
-        var nativeCollapIndex: Int = 0
-    )
-
-    private fun tryOption2(
-        activity: AppCompatActivity,
-        holder: SplashHolder,
-        callback: InterCallback,
-        interIndex: IdIndexWrapper,
-        tryOption3: () -> Unit
-    ) {
-        if (splashSuccess) {
-            return
-        }
-        if (holder.interIds.isEmpty() || interIndex.interIndex >= holder.interIds.size) {
-            tryOption3()
-            return
-        }
-
-        val newCallback = object : InterCallback() {
-            override fun onInterClosed() {
-                splashSuccess = true
-                callback.onInterClosed()
-            }
-
-            override fun onInterFailed(error: String) {
-                if (!splashSuccess) {
-                    interIndex.interIndex++
-                    tryOption3()
-                }
-            }
-
-            override fun onInterLoaded() {
-                if (!splashSuccess) {
-                    callback.onInterLoaded()
-                }
-            }
-        }
-
-        performLoadAndShowInterstitialWithSingleId(
-            activity,
-            holder,
-            newCallback,
-            interIndex.interIndex
-        )
-    }
-
-    private fun performLoadAndShowInterstitialWithSingleId(
-        activity: Activity,
-        holder: InterHolder,
-        callback: InterCallback,
-        index: Int
-    ) {
-        mInterstitialAd = null
-        if (isPremium) {
-            callback.onInterClosed()
-            return
-        }
-        if (!isEnableAds || !isNetworkConnected(activity) || holder.isInterLoading) {
-            logE("Not EnableAds or No Internet or Inter still loading")
-            callback.onInterFailed("")
-            return
-        }
-        isAdShowing = false
-        if (adRequest == null) {
-            initAdRequest(timeOut)
-        }
-        if (OnResumeUtils.isInitialized) {
-            if (!OnResumeUtils.isOnResumeEnable) {
-                logE("OnResume is disabled??")
-                callback.onInterFailed("")
-                return
-            } else {
-                isAdShowing = false
-                OnResumeUtils.setEnableOnResume(false)
-            }
-        }
-        if (holder.showLoading && holder.key != "ads_splash") {
-            dialogLoading(activity)
-        }
-        holder.isInterLoading = true
-        tryLoadAndShowInterSingleId(activity, holder, callback, index)
-    }
-
-    private fun tryLoadAndShowInterSingleId(
-        activity: Activity,
-        holder: InterHolder,
-        callback: InterCallback,
-        index: Int
-    ) {
-        val adIds = holder.interIds
-        if (index >= adIds.size) { //* Failed
-            holder.isInterLoading = false
-            mInterstitialAd = null
-            OnResumeUtils.setEnableOnResume(true)
-            isAdShowing = false
-            callback.onInterFailed("")
-            return
-        }
-
-        val adId = adIds[index]
-        log("Loading Inter ${holder.key}/$adId (index=$index/${adIds.size}, single id mode)")
-        val loadStart = nowMs()
-        InterstitialAd.load(activity, adId, adRequest!!, object : InterstitialAdLoadCallback() {
-            override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                super.onAdLoaded(interstitialAd)
-                log("Inter Loaded")
-                holder.isInterLoading = false
-                callback.onInterLoaded()
-                mInterstitialAd = interstitialAd
-                mInterstitialAd!!.onPaidEventListener =
-                    OnPaidEventListener { adValue: AdValue? ->
-                        adValue?.let {
-                            SolarUtils.trackAdImpression(
-                                ad = adValue,
-                                adUnit = interstitialAd.adUnitId,
-                                format = "interstitial"
-                            )
-                            val adapterInfo = interstitialAd.responseInfo.loadedAdapterResponseInfo
-                            AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Interstitial")
-                            AdjustUtils.postRevenueAdjust(activity, it, interstitialAd.adUnitId)
-
-                        }
-                    }
-                mInterstitialAd!!.fullScreenContentCallback =
-                    object : FullScreenContentCallback() {
-                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            logE("InterFailedToShowFullScreen" + adError.message)
-                            SolarUtils.trackAdShowFailure(
-                                adUnit = interstitialAd.adUnitId,
-                                format = formatNameForSolar("interstitial"),
-                                adError = adError
-                            )
-                            callback.onInterFailed(adError.message)
-                            isAdShowing = false
-                            OnResumeUtils.setEnableOnResume(true)
-                            isAdShowing = false
-                            if (mInterstitialAd != null) {
-                                mInterstitialAd = null
-                            }
-                            dismissAdDialog()
-                        }
-
-                        override fun onAdDismissedFullScreenContent() {
-                            lastTimeShowInterstitial = Date().time
-                            callback.onInterClosed()
-                            if (mInterstitialAd != null) {
-                                mInterstitialAd = null
-                            }
-                            isAdShowing = false
-                            OnResumeUtils.setEnableOnResume(true)
-                        }
-
-                        override fun onAdShowedFullScreenContent() {
-                            super.onAdShowedFullScreenContent()
-                            logE("onInterShowedFullScreenContent")
-                            callback.onInterShowed()
-                            dismissAdDialog()
-                        }
-                    }
-                if ((activity as AppCompatActivity).lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) && mInterstitialAd != null) {
-                    callback.onStartAction()
-                    mInterstitialAd!!.show(activity)
-                    isAdShowing = true
-                } else {
-                    logE("Interstitial can't show in background")
-                    mInterstitialAd = null
-                    dismissAdDialog()
-                    isAdShowing = false
-                    OnResumeUtils.setEnableOnResume(true)
-                    callback.onInterFailed("")
-                }
-            }
-
-            override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                super.onAdFailedToLoad(loadAdError)
-                logE("InterFailed: ${loadAdError.message} (single id mode, will not retry)")
-                val latency = nowMs() - loadStart
-                SolarUtils.trackAdLoadFailure(
-                    adUnit = adId,
-                    format = formatNameForSolar("interstitial"),
-                    loadAdError = loadAdError,
-                    latencyMs = latency,
-                    waterfallIndex = index
-                )
-                holder.isInterLoading = false
-                mInterstitialAd = null
-                OnResumeUtils.setEnableOnResume(true)
-                isAdShowing = false
-                callback.onInterFailed(loadAdError.message)
-            }
-        })
-    }
-
-    private fun tryOption3(
-        activity: AppCompatActivity,
-        holder: SplashHolder,
-        callback: InterCallback,
-        index: IdIndexWrapper,
-        tryOption4: () -> Unit
-    ) {
-        if (splashSuccess) {
-            return
-        }
-        if (holder.interIds.isEmpty() || index.interIndex >= holder.interIds.size ||
-            holder.nativeIds.isEmpty() || index.nativeIndex >= holder.nativeIds.size
-        ) {
-            tryOption4()
-            return
-        }
-
-        val newHolder = SplashHolder(holder.key).apply {
-            enable = holder.enable
-            showLoading = holder.showLoading
-            waitTime = holder.waitTime
-            interUnit = holder.interUnit?.let { unit ->
-                AdUnit(
-                    name = unit.name,
-                    id1 = holder.interIds.getOrNull(index.interIndex) ?: "",
-                    id2 = "",
-                    id3 = ""
-                )
-            }
-            nativeUnit = holder.nativeUnit?.let { unit ->
-                AdUnit(
-                    name = unit.name,
-                    id1 = holder.nativeIds.getOrNull(index.nativeIndex) ?: "",
-                    id2 = "",
-                    id3 = ""
-                )
-            }
-        }
-        Helper.parseSplash(newHolder)
-
-        val newCallback = object : InterCallback() {
-            override fun onInterClosed() {
-                splashSuccess = true
-                callback.onInterClosed()
-            }
-
-            override fun onInterFailed(error: String) {
-                if (!splashSuccess) {
-                    index.interIndex++
-                    tryOption4()
-                }
-            }
-
-            override fun onInterLoaded() {
-                if (!splashSuccess) {
-                    callback.onInterLoaded()
-                }
-            }
-        }
-
-        performLoadAndShowInterWithNativeWithSingleId(activity, newHolder, index, newCallback)
-    }
-
-    private fun performLoadAndShowInterWithNativeWithSingleId(
-        activity: AppCompatActivity,
-        holder: InterHolder, nativeIndex: IdIndexWrapper,
-        callback: InterCallback
-    ) {
-        if (isPremium) {
-            callback.onInterClosed()
-            return
-        }
-
-        val singleInterHolder = InterHolder(holder.key).apply {
-            enable = holder.enable
-            showLoading = holder.showLoading
-            waitTime = holder.waitTime
-            interUnit = holder.interUnit?.let { unit ->
-                AdUnit(unit.name, unit.id1, "", "")
-            }
-            nativeUnit = holder.nativeUnit?.let { unit ->
-                AdUnit(unit.name, unit.id1, "", "")
-            }
-        }
-        Helper.parseInter(singleInterHolder)
-
-        val container =
-            activity.layoutInflater.inflate(R.layout.layout_native_inter_container, null, false)
-        val viewGroup = container.findViewById<FrameLayout>(R.id.viewGroup)
-        val btnClose = container.findViewById<View>(R.id.ad_close)
-        val tvTimer = container.findViewById<TextView>(R.id.ad_timer)
-
-        val tag = "native_full_view"
-        val decorView: ViewGroup
-        try {
-            decorView = activity.window.decorView as ViewGroup
-            decorView.findViewWithTag<View>(tag)?.let { decorView.removeView(it) }
-            container.tag = tag
-            container.gone()
-            decorView.addView(container)
-        } catch (e: Exception) {
-            logE("Native Inter: ${e.message}")
-            callback.onInterFailed(e.message.toString())
-            return
-        }
-
-        tvTimer.gone()
-        btnClose.invisible()
-        btnClose.setOnClickListener {
-            OnResumeUtils.setEnableOnResume(true)
-            container.gone()
-            runCatching { decorView.removeView(container) }
-            callback.onInterClosed()
-        }
-
-        var shimmerLoadingView: ShimmerFrameLayout? = null
-        fun showLoadingShimmer() {
-            try {
-                if (shimmerLoadingView == null) {
-                    val loadingLayout = activity.layoutInflater.inflate(R.layout.layout_native_loading_full, null, false)
-                    shimmerLoadingView = loadingLayout.findViewById(R.id.shimmer_view_container)
-                    viewGroup.removeAllViews()
-                    viewGroup.addView(loadingLayout)
-                    shimmerLoadingView?.startShimmer()
-                }
-                container.visible()
-                OnResumeUtils.setEnableOnResume(false)
-            } catch (e: Exception) {
-                logE("Error showing loading shimmer: ${e.message}")
-            }
-        }
-
-        fun hideLoadingShimmer() {
-            try {
-                shimmerLoadingView?.stopShimmer()
-                shimmerLoadingView = null
-            } catch (e: Exception) {
-                logE("Error hiding loading shimmer: ${e.message}")
-            }
-        }
-
-        performLoadAndShowInterstitialWithSingleId(
-            activity,
-            singleInterHolder,
-            object : InterCallback() {
-                override fun onInterClosed() {
-                    if (singleInterHolder.isNativeReady()) {
-                        hideLoadingShimmer()
-                        if (singleInterHolder.waitTime > 0) {
-                            activity.lifecycleScope.launch(Dispatchers.Main) {
-                                tvTimer.visible()
-                                val timeOut = singleInterHolder.waitTime
-                                for (i in timeOut downTo 0) {
-                                    tvTimer.text = i.toString()
-                                    delay(1000)
-                                }
-                                tvTimer.gone()
-                                tvTimer.text = timeOut.toString()
-                                delay(1000)
-                                btnClose.visible()
-                            }
-                        } else {
-                            btnClose.visible()
-                        }
-                        destroyBannerCollapView()
-                        performShowNativeFull(
-                            activity,
-                            viewGroup,
-                            singleInterHolder,
-                            object : NativeCallbackSimple() {
-                                override fun onNativeLoaded() {
-                                    //  if (isSplash) {
-                                    //      runCatching {
-                                    //          decorView.addView(container)
-                                    //              container.visible()
-                                    //           }
-                                    //           }
-                                }
-
-                                override fun onNativeFailed(error: String) {
-                                    hideLoadingShimmer()
-                                    container.gone()
-                                    runCatching { decorView.removeView(container) }
-                                    OnResumeUtils.setEnableOnResume(true)
-                                    singleInterHolder.nativeAd.removeObservers(activity)
-                                    singleInterHolder.nativeAd.value = null
-                                    callback.onInterClosed()
-                                }
-                            })
-                    } else {
-                        if (singleInterHolder.isNativeLoading) {
-                            showLoadingShimmer()
-                            singleInterHolder.nativeAd.observe(activity) { ad: NativeAd? ->
-                                if (ad != null && !activity.isFinishing && shimmerLoadingView != null) {
-                                    hideLoadingShimmer()
-                                    if (singleInterHolder.waitTime > 0) {
-                                        activity.lifecycleScope.launch(Dispatchers.Main) {
-                                            tvTimer.visible()
-                                            val timeOut = singleInterHolder.waitTime
-                                            for (i in timeOut downTo 0) {
-                                                tvTimer.text = i.toString()
-                                                delay(1000)
-                                            }
-                                            tvTimer.gone()
-                                            tvTimer.text = timeOut.toString()
-                                            delay(1000)
-                                            btnClose.visible()
-                                        }
-                                    } else {
-                                        btnClose.visible()
-                                    }
-                                    destroyBannerCollapView()
-                                    performShowNativeFull(
-                                        activity,
-                                        viewGroup,
-                                        singleInterHolder,
-                                        object : NativeCallbackSimple() {
-                                            override fun onNativeLoaded() {}
-                                            override fun onNativeFailed(error: String) {
-                                                container.gone()
-                                                runCatching { decorView.removeView(container) }
-                                                OnResumeUtils.setEnableOnResume(true)
-                                                singleInterHolder.nativeAd.removeObservers(activity)
-                                                singleInterHolder.nativeAd.value = null
-                                                callback.onInterClosed()
-                                            }
-                                        })
-                                    // Remove observer after handling
-                                    singleInterHolder.nativeAd.removeObservers(activity)
-                                }
-                            }
-
-                            // Set timeout to hide shimmer if native fails after some time
-                            val timeoutHandler = Handler(Looper.getMainLooper())
-                            val timeoutRunnable = Runnable {
-                                if (shimmerLoadingView != null && !singleInterHolder.isNativeReady()) {
-                                    hideLoadingShimmer()
-                                    container.gone()
-                                    runCatching { decorView.removeView(container) }
-                                    OnResumeUtils.setEnableOnResume(true)
-                                    singleInterHolder.nativeAd.removeObservers(activity)
-                                    singleInterHolder.nativeAd.value = null
-                                    logE("Native Inter timeout waiting for native")
-                                    callback.onInterClosed()
-                                }
-                            }
-                            timeoutHandler.postDelayed(timeoutRunnable, 15000) // 15 second timeout
-                        } else {
-                            // Native is not loading and not ready - likely failed, hide container
-                            hideLoadingShimmer()
-                            container.gone()
-                            runCatching { decorView.removeView(container) }
-                            OnResumeUtils.setEnableOnResume(true)
-                            singleInterHolder.nativeAd.removeObservers(activity)
-                            singleInterHolder.nativeAd.value = null
-                            logE("Native Inter not ready and not loading")
-                            callback.onInterClosed()
-                        }
-                    }
-                }
-
-                override fun onInterFailed(error: String) {
-                    hideLoadingShimmer()
-                    container.gone()
-                    runCatching { decorView.removeView(container) }
-                    OnResumeUtils.setEnableOnResume(true)
-                    singleInterHolder.nativeAd.removeObservers(activity)
-                    singleInterHolder.nativeAd.value = null
-                    callback.onInterFailed(error)
-                }
-
-                override fun onInterLoaded() {
-                    callback.onInterLoaded()
-                    performLoadNativeFull(activity, singleInterHolder, object : NativeCallback() {
-                        override fun onNativeReady(ad: NativeAd?) {
-                            runCatching {
-                                // Native loaded successfully - will be shown when inter closes
-                                if (!container.isVisible) {
-                                    container.visible()
-                                }
-                            }
-                        }
-
-                        override fun onNativeFailed(error: String) {
-                            // Native failed after all retries - if shimmer is showing, hide it
-                            logE("Native failed during inter loading: $error")
-                            // If container is visible (shimmer showing), it means inter already closed
-                            // and we're waiting. In this case, hide shimmer and finish.
-                            if (shimmerLoadingView != null) {
-                                hideLoadingShimmer()
-                                container.gone()
-                                runCatching { decorView.removeView(container) }
-                                OnResumeUtils.setEnableOnResume(true)
-                                singleInterHolder.nativeAd.removeObservers(activity)
-                                singleInterHolder.nativeAd.value = null
-                                callback.onInterClosed()
-                            }
-                            // If shimmer not showing, onInterClosed will handle it
-                        }
-
-                        override fun onNativeClicked() {
-                        }
-                    })
-
-                }
-            },
-            nativeIndex.interIndex
-        )
-    }
-
-    private fun tryOption4(
-        activity: AppCompatActivity,
-        holder: SplashHolder,
-        callback: InterCallback,
-        nativeIndex: IdIndexWrapper,
-        tryNextAppOpenIdOrFail: () -> Unit
-    ) {
-        if (splashSuccess) {
-            return
-        }
-        if (holder.nativeIds.isEmpty() || nativeIndex.nativeIndex >= holder.nativeIds.size) {
-            tryNextAppOpenIdOrFail()
-            return
-        }
-
-        val newHolder = SplashHolder(holder.key).apply {
-            enable = holder.enable
-            nativeUnit = holder.nativeUnit?.let { unit ->
-                AdUnit(
-                    name = unit.name,
-                    id1 = holder.nativeIds.getOrNull(nativeIndex.nativeIndex) ?: "",
-                    id2 = "",
-                    id3 = ""
-                )
-            }
-            nativeTemplate = holder.nativeTemplate
-            loadingSize = holder.loadingSize
-        }
-        Helper.parseNative(newHolder)
-
-        val newCallback = object : InterCallback() {
-            override fun onInterClosed() {
-                splashSuccess = true
-                callback.onInterClosed()
-            }
-
-            override fun onInterFailed(error: String) {
-                if (!splashSuccess) {
-                    nativeIndex.nativeIndex++
-                    tryNextAppOpenIdOrFail()
-                }
-            }
-
-            override fun onInterLoaded() {
-                if (!splashSuccess) {
-                    callback.onInterLoaded()
-                }
-            }
-        }
-
-        performLoadAndShowNativeInterWithSingleId(activity, newHolder, newCallback)
-    }
-
-    private fun performLoadAndShowNativeInterWithSingleId(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        callback: InterCallback
-    ) {
-        if (isPremium) {
-            callback.onInterClosed()
-            return
-        }
-
-        val singleNativeHolder = NativeHolder(holder.key).apply {
-            enable = holder.enable
-            nativeUnit = holder.nativeUnit?.let { unit ->
-                AdUnit(unit.name, unit.id1, "", "")
-            }
-            nativeTemplate = holder.nativeTemplate
-            loadingSize = holder.loadingSize
-        }
-        Helper.parseNative(singleNativeHolder)
-
-        val container =
-            activity.layoutInflater.inflate(R.layout.layout_native_inter_container, null, false)
-        val viewGroup = container.findViewById<FrameLayout>(R.id.viewGroup)
-        val btnClose = container.findViewById<View>(R.id.ad_close)
-        val tvTimer = container.findViewById<TextView>(R.id.ad_timer)
-
-        val tag = "native_full_view"
-        val decorView: ViewGroup
-        try {
-            decorView = activity.window.decorView as ViewGroup
-            decorView.findViewWithTag<View>(tag)?.let { decorView.removeView(it) }
-            container.tag = tag
-            container.gone()
-            decorView.addView(container)
-        } catch (e: Exception) {
-            logE("Native Inter: ${e.message}")
-            callback.onInterFailed(e.message.toString())
-            return
-        }
-        OnResumeUtils.setEnableOnResume(false)
-        tvTimer.gone()
-        btnClose.invisible()
-        btnClose.setOnClickListener {
-            OnResumeUtils.setEnableOnResume(true)
-            container.gone()
-            runCatching { decorView.removeView(container) }
-            callback.onInterClosed()
-        }
-
-        val handler = Handler(Looper.getMainLooper())
-        handler.postDelayed({
-            container.gone()
-            runCatching { decorView.removeView(container) }
-            logE("Native Inter Timeout")
-            callback.onInterFailed("")
-        }, 15000) //* Timeout 15s for loading NativeFull
-
-        performLoadAndShowNativeFull(
-            activity,
-            viewGroup,
-            singleNativeHolder,
-            object : NativeCallbackSimple() {
-                override fun onNativeLoaded() {
-                    runCatching {
-                        container.visible()
-                    }.onFailure {
-                        callback.onInterFailed("Native Inter failed to addView")
-                    }
-                    btnClose.visible()
-                    dismissAdDialog()
-                    handler.removeCallbacksAndMessages(null)
-                }
-
-                override fun onNativeFailed(error: String) {
-                    handler.removeCallbacksAndMessages(null)
-                    container.gone()
-                    runCatching { decorView.removeView(container) }
-                    OnResumeUtils.setEnableOnResume(true)
-                    callback.onInterFailed(error)
-                }
-            })
-    }
-
-    private fun tryNextAppOpenIdOrFail(
-        holder: SplashHolder,
-        callback: InterCallback,
-        indexWrapper: IdIndexWrapper,
-        showAOAWithSingleId: (SplashHolder, Int) -> Unit
-    ) {
-        if (splashSuccess) {
-            return
-        }
-        val appOpenIds = holder.appOpenIds
-        indexWrapper.appOpenIndex++
-        if (indexWrapper.appOpenIndex >= appOpenIds.size) {
-            callback.onInterFailed("Not show AOA")
-            return
-        }
-        showAOAWithSingleId(holder, indexWrapper.appOpenIndex)
-    }
-
-
-    /**
-     * Đợi cho đến khi native language loading xong (nếu có)
-     * Timeout sau 10 giây để tránh đợi vô hạn
-     */
-    private fun waitForNativeLanguageLoading(
-        nativeLanguageHolder: NativeMultiHolder?,
-        onComplete: () -> Unit
-    ) {
-        if (nativeLanguageHolder == null || !isNativeLanguageLoading(nativeLanguageHolder)) {
-            onComplete()
-            return
-        }
-        val startTime = System.currentTimeMillis()
-        val timeoutMs = 10000L
-        val handler = Handler(Looper.getMainLooper())
-        val checkRunnable = object : Runnable {
-            override fun run() {
-                val elapsed = System.currentTimeMillis() - startTime
-                if (!isNativeLanguageLoading(nativeLanguageHolder) || elapsed >= timeoutMs) {
-                    if (elapsed >= timeoutMs) {
-                        logE("waitForNativeLanguageLoading: Timeout after ${timeoutMs}ms")
-                    }
-                    onComplete()
-                    handler.removeCallbacksAndMessages(null)
-                } else {
-                    handler.postDelayed(this, 100)
-                }
-            }
-        }
-        handler.postDelayed(checkRunnable, 100)
-    }
-
     @JvmStatic
-    fun loadAndShowAdSplash(
-        activity: AppCompatActivity,
-        holder: SplashHolder,
-        callback: InterCallback,
-        nativeLanguageHolder: NativeMultiHolder? = null
-    ) {
+    fun loadAndShowAdSplash(activity: AppCompatActivity, holder: SplashHolder, callback: InterCallback) {
         Helper.parseSplash(holder)
         splashSuccess = false
-
-        val wrappedCallback = object : InterCallback() {
-            override fun onStartAction() = callback.onStartAction()
-            override fun onInterShowed() = callback.onInterShowed()
-            override fun onInterLoaded() = callback.onInterLoaded()
-
-            override fun onInterClosed() {
-                waitForNativeLanguageLoading(nativeLanguageHolder) {
-                    callback.onInterClosed()
-                }
-            }
-
-            override fun onInterFailed(error: String) {
-                waitForNativeLanguageLoading(nativeLanguageHolder) {
-                    callback.onInterFailed(error)
-                }
-            }
-        }
-
         if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
             logE("Not EnableAds or No Internet")
             callback.onInterFailed("")
-            return
         }
-        // Khởi tạo index: -1 nếu enable != "1" (để khi gọi tryNextAppOpenIdOrFail sẽ thử id đầu tiên)
-        // 0 nếu enable = "1" (đã thử id đầu tiên, nên lần tiếp theo sẽ thử id thứ 2)
-        // Tất cả các index bắt đầu từ 0 để thử ID đầu tiên của mỗi loại
-        val indexWrapper = IdIndexWrapper(
-            appOpenIndex = if (holder.enable == "1") 0 else -1,
-            interIndex = 0,
-            nativeIndex = 0
-        )
 
-        lateinit var tryOption2Func: () -> Unit
-        lateinit var tryOption3Func: () -> Unit
-        lateinit var tryOption4Func: () -> Unit
-        lateinit var showAOAWithSingleIdFunc: (SplashHolder, Int) -> Unit
-
-        tryOption4Func = {
-            softDelay {
-                tryOption4(activity, holder, wrappedCallback, indexWrapper) {
-                    tryNextAppOpenIdOrFail(
-                        holder,
-                        wrappedCallback,
-                        indexWrapper,
-                        showAOAWithSingleIdFunc
-                    )
+        fun showAOA() {
+            AOAUtils(activity, holder, 20000, object : AOAUtils.AoaCallback {
+                override fun onAdsClose() {
+                    splashSuccess = true
+                    callback.onInterClosed()
                 }
-            }
-        }
 
-        tryOption3Func = {
-            softDelay {
-                tryOption3(
-                    activity,
-                    holder,
-                    wrappedCallback,
-                    indexWrapper,
-                    tryOption4Func
-                )
-            }
-        }
+                override fun onAdsFailed(message: String) {
+                    callback.onInterFailed(message)
+                }
 
-        tryOption2Func = {
-            softDelay {
-                tryOption2(activity, holder, wrappedCallback, indexWrapper, tryOption3Func)
-            }
-        }
+                override fun onAdsLoaded() {
+                    callback.onInterLoaded()
+                }
 
-        showAOAWithSingleIdFunc = { splashHolder, index ->
-            showAOAWithSingleId(activity, splashHolder, wrappedCallback, tryOption2Func, index)
-        }
-
-        val showAOAWithFallbackFunc = {
-            showAOAWithFallback(holder, tryOption2Func, showAOAWithSingleIdFunc)
+            }).loadAndShowAoa()
         }
 
         if (holder.enable != "0" && activity.adOrg()) {
-            showAOAWithFallbackFunc()
-            return
-        }
-        when (holder.enable) {
-            "1" -> showAOAWithFallbackFunc()
-
-            "2" -> tryOption2Func()
-
-            "3" -> tryOption3Func()
-
-            "4" -> tryOption4Func()
-
-            else -> {
-                splashSuccess = true
-                wrappedCallback.onInterFailed("Not show AOA")
-            }
-        }
-    }
-
-    private fun showAOAWithFallback(
-        holder: SplashHolder,
-        tryOption2: () -> Unit,
-        showAOAWithSingleId: (SplashHolder, Int) -> Unit
-    ) {
-        if (splashSuccess) {
-            return
-        }
-        val appOpenIds = holder.appOpenIds
-        if (appOpenIds.isEmpty()) {
-            softDelay {
-                tryOption2()
-            }
-            return
-        }
-        Helper.parseSplash(holder)
-        showAOAWithSingleId(holder, 0)
-    }
-
-    private fun showAOAWithSingleId(
-        activity: AppCompatActivity,
-        splashHolder: SplashHolder,
-        callback: InterCallback,
-        tryOption2: () -> Unit, index: Int
-    ) {
-        if (splashSuccess) {
+            showAOA()
             return
         }
 
-        AOAUtils(activity, splashHolder, index, 20000, object : AOAUtils.AoaCallback {
-            override fun onAdsClose() {
+        val newCallback = object: InterCallback() {
+            override fun onInterClosed() {
                 splashSuccess = true
                 callback.onInterClosed()
             }
 
-            override fun onAdsFailed(message: String) {
-                if (!splashSuccess) {
-                    tryOption2()
-                }
+            override fun onInterFailed(error: String) {
+                callback.onInterFailed(error)
             }
 
-            override fun onAdsLoaded() {
-                if (!splashSuccess) {
-                    callback.onInterLoaded()
-                }
-            }
-
-        }).loadAndShowAoa()
-    }
-
-    private fun tryBannerWithIndex(
-        activity: AppCompatActivity,
-        holder: BannerHolder,
-        viewGroup: ViewGroup,
-        callback: BannerCallback,
-        index: Int,
-        onFailed: () -> Unit
-    ) {
-        if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) {
-            onFailed()
-            return
-        }
-        if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
-            onFailed()
-            return
         }
 
-        val adIds = holder.bannerIds
-        if (index >= adIds.size) {
-            onFailed()
-            return
+
+        when (holder.enable) {
+            "1" -> showAOA()
+
+            "2" -> performLoadAndShowInterstitial(activity, holder, newCallback)
+
+            "3" -> performLoadAndShowInterWithNative(activity, holder, newCallback)
+
+            "4" -> performLoadAndShowNativeInter(activity, holder, newCallback, false)
+
+            else -> callback.onInterFailed("Not show AOA")
+
         }
-
-        val adId = adIds[index]
-        val adSize = getBannerSize(activity)
-        val loadStart = nowMs()
-        val mAdView = AdView(activity).apply {
-            adUnitId = adId
-            setAdSize(adSize)
-
-        }
-        mAdView.adListener = object : AdListener() {
-            override fun onAdLoaded() {
-                log("Banner Loaded with index $index")
-                val adapterInfo = mAdView.responseInfo?.loadedAdapterResponseInfo
-
-                mAdView.onPaidEventListener = OnPaidEventListener { adValue ->
-                    SolarUtils.trackAdImpression(
-                        ad = adValue,
-                        adUnit = adId,
-                        format = "banner"
-                    )
-                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Banner")
-
-                    AdjustUtils.postRevenueAdjust(activity, adValue, adId)
-
-                }
-                shimmerFrameLayout?.stopShimmer()
-                runCatching {
-                    viewGroup.removeAllViews()
-                    viewGroup.addView(mAdView)
-                    viewGroup.addView(bannerDivider(activity, holder.anchor))
-                }
-                callback.onBannerLoaded(adSize)
-            }
-
-            override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                logE("BannerFailed with index $index: ${loadAdError.message}")
-                mAdView.destroy()
-                val latency = nowMs() - loadStart
-                SolarUtils.trackAdLoadFailure(
-                    adUnit = adId,
-                    format = formatNameForSolar("banner"),
-                    loadAdError = loadAdError,
-                    latencyMs = latency,
-                    waterfallIndex = index
-                )
-                shimmerFrameLayout?.stopShimmer()
-                onFailed()
-            }
-        }
-        adRequest?.let {
-            log("Loading Banner ${holder.key}/$adId (index=$index)")
-            mAdView.loadAd(it)
-        } ?: onFailed()
-    }
-
-    private fun tryNativeWithIndex(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback,
-        index: Int,
-        onFailed: () -> Unit
-    ) {
-        if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) {
-            onFailed()
-            return
-        }
-        if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
-            onFailed()
-            return
-        }
-
-        val adIds = holder.nativeIds
-        if (index >= adIds.size) {
-            onFailed()
-            return
-        }
-
-        val adId = adIds[index]
-        val loadStart = nowMs()
-        val adOptions = NativeAdOptions.Builder()
-            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
-            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
-            .build()
-        val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
-            log("Native Loaded with index $index")
-            shimmerFrameLayout?.stopShimmer()
-            callback.onNativeReady(nativeAd)
-            val layoutId = nativeTemplateId(holder)
-            val adView = LayoutInflater.from(activity).inflate(layoutId, null) as NativeAdView
-            populateNativeAdView(nativeAd, adView)
-            nativeAd.setOnPaidEventListener { adValue: AdValue ->
-                SolarUtils.trackAdImpression(
-                    ad = adValue,
-                    adUnit = adId,
-                    format = "native"
-                )
-                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
-                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
-                AdjustUtils.postRevenueAdjust(activity, adValue, adId)
-
-            }
-            nativeExtras(nativeAd)
-            runCatching {
-                viewGroup.removeAllViews()
-                viewGroup.addView(adView)
-            }
-        }.withAdListener(object : AdListener() {
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                logE("NativeFailed with index $index: ${adError.message}")
-                val latency = nowMs() - loadStart
-                SolarUtils.trackAdLoadFailure(
-                    adUnit = adId,
-                    format = formatNameForSolar("native"),
-                    loadAdError = adError,
-                    latencyMs = latency,
-                    waterfallIndex = index
-                )
-                onFailed()
-            }
-        }).withNativeAdOptions(adOptions).build()
-
-        adRequest?.let {
-            log("Loading Native ${holder.key}/$adId (index=$index)")
-            adLoader.loadAd(it)
-        } ?: onFailed()
-    }
-
-    private fun tryBannerCollapWithIndex(
-        activity: AppCompatActivity,
-        holder: BannerHolder,
-        viewGroup: ViewGroup,
-        callback: BannerCallback,
-        index: Int,
-        onFailed: () -> Unit
-    ) {
-        if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) {
-            onFailed()
-            return
-        }
-        if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
-            onFailed()
-            return
-        }
-
-        val adIds = holder.bannerCollapIds
-        if (index >= adIds.size) {
-            onFailed()
-            return
-        }
-
-        val adId = adIds[index]
-
-        val adSize = getBannerSize(activity)
-        val loadStart = nowMs()
-        val adView = AdView(activity).apply {
-            this.adUnitId = adId
-            setAdSize(adSize)
-        }
-        mBannerCollapView = adView
-        adView.adListener = object : AdListener() {
-            override fun onAdLoaded() {
-                log("BannerCollap Loaded with index $index")
-                val adapterInfo = adView.responseInfo?.loadedAdapterResponseInfo
-
-                adView.onPaidEventListener = OnPaidEventListener { adValue ->
-                    SolarUtils.trackAdImpression(
-                        ad = adValue,
-                        adUnit = adView.adUnitId,
-                        format = "banner"
-                    )
-                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Banner")
-
-                    AdjustUtils.postRevenueAdjust(activity, adValue, adView.adUnitId)
-
-                }
-                shimmerFrameLayout?.stopShimmer()
-                runCatching {
-                    viewGroup.removeAllViews()
-                    if (!isNativeInterShowing(activity)) {
-                        viewGroup.addView(adView)
-                        viewGroup.addView(bannerDivider(activity, holder.anchor))
-                        callback.onBannerLoaded(adSize)
-                    }
-                }
-            }
-
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                logE("BannerCollapFailed with index $index: ${adError.message}")
-                adView.destroy()
-                val latency = nowMs() - loadStart
-                SolarUtils.trackAdLoadFailure(
-                    adUnit = adId,
-                    format = formatNameForSolar("banner"),
-                    loadAdError = adError,
-                    latencyMs = latency,
-                    waterfallIndex = index
-                )
-                onFailed()
-            }
-        }
-        adRequest?.let {
-            log("Loading BannerCollap ${holder.key}/$adId (index=$index)")
-            adView.loadAd(it)
-        } ?: onFailed()
-    }
-
-    private fun tryNativeCollapWithIndex(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback,
-        index: Int,
-        onFailed: () -> Unit
-    ) {
-        if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) {
-            onFailed()
-            return
-        }
-        if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
-            onFailed()
-            return
-        }
-        if (isNativeInterShowing(activity)) {
-            onFailed()
-            return
-        }
-        val tagView = activity.layoutInflater.inflate(R.layout.layout_banner_loading, null, false)
-        runCatching {
-            viewGroup.removeAllViews()
-            viewGroup.addView(tagView, 0)
-        }
-        viewGroup.visible()
-        shimmerFrameLayout = tagView.findViewById(R.id.shimmer_view_container)
-        shimmerFrameLayout?.startShimmer()
-//        holder.loadTimestamp = System.currentTimeMillis()
-
-        val adIds = holder.nativeIds
-        if (index >= adIds.size) {
-            runCatching {
-                viewGroup.removeAllViews()
-                viewGroup.gone()
-            }
-            onFailed()
-            return
-        }
-
-        val adId = adIds[index]
-        val decorView = activity.window.decorView as ViewGroup
-        val tag = "native_collap_view"
-        val loadStart = nowMs()
-        val adOptions = NativeAdOptions.Builder()
-            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
-            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
-            .build()
-        val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
-            log("NativeCollap Loaded with index $index")
-            shimmerFrameLayout?.stopShimmer()
-            callback.onNativeReady(nativeAd)
-            val adViewCollap = activity.layoutInflater.inflate(
-                R.layout.native_template_collap,
-                null
-            ) as NativeAdView
-            adViewCollap.tag = tag
-            nativeAd.setOnPaidEventListener { adValue: AdValue ->
-                SolarUtils.trackAdImpression(
-                    ad = adValue,
-                    adUnit = adId,
-                    format = "native"
-                )
-                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
-                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
-                AdjustUtils.postRevenueAdjust(activity, adValue, adId)
-
-            }
-            nativeExtras(nativeAd)
-            populateNativeAdViewCollap(nativeAd, adViewCollap, holder.anchor) {
-                runCatching {
-                    val configList = holder.collapConfig ?: listOf()
-                    val clickCount = activity.prefs().getInt("collap_click_count", 0) + 1
-                    val currentStepIndex = activity.prefs().getInt("collap_step_index", 0)
-                    log("NativeCollap Clicked: collapConfig=$configList || index=$currentStepIndex || clickCount=$clickCount")
-                    if (currentStepIndex >= configList.size) {
-                        logE("No config => Skip counting")
-                        decorView.removeView(adViewCollap)
-                        return@runCatching
-                    }
-                    activity.prefs().edit { putInt("collap_click_count", clickCount) }
-                    if (currentStepIndex < configList.size && clickCount >= configList[currentStepIndex]) {
-                        activity.prefs().edit {
-                            putInt("collap_step_index", currentStepIndex + 1)
-                            putInt("collap_click_count", 0)
-                        }
-                        adViewCollap.findViewById<View>(R.id.ad_call_to_action).performClick()
-                    } else {
-                        decorView.removeView(adViewCollap)
-                    }
-                }
-            }
-            runCatching {
-                viewGroup.removeAllViews()
-                // Remove previous native collapse view if exists (when reloading before clicking ad_call_to_action)
-                val existingView = decorView.findViewWithTag<View>(tag)
-                existingView?.let {
-                    decorView.removeView(it)
-                }
-                val layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
-                    gravity = if (holder.anchor == "top") Gravity.TOP else Gravity.BOTTOM
-                }
-                if (!isNativeInterShowing(activity)) {
-                    decorView.addView(adViewCollap, layoutParams)
-                    val adViewSmall = activity.layoutInflater.inflate(
-                        R.layout.native_template_tiny1,
-                        null
-                    ) as NativeAdView
-                    populateNativeAdView(nativeAd, adViewSmall)
-                    viewGroup.addView(adViewSmall)
-                }
-            }
-        }.withAdListener(object : AdListener() {
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                logE("NativeCollapFailed with index $index: ${adError.message}")
-                val latency = nowMs() - loadStart
-                SolarUtils.trackAdLoadFailure(
-                    adUnit = adId,
-                    format = formatNameForSolar("native"),
-                    loadAdError = adError,
-                    latencyMs = latency,
-                    waterfallIndex = index
-                )
-                onFailed()
-            }
-
-            override fun onAdClicked() {
-                super.onAdClicked()
-                activity.prefs().edit { putInt("collap_click_count", 0) }
-            }
-        }).withNativeAdOptions(adOptions).build()
-
-        adRequest?.let {
-            log("Loading NativeCollap ${holder.key}/$adId (index=$index)")
-            adLoader.loadAd(it)
-        } ?: onFailed()
     }
 
     @JvmStatic
@@ -1415,451 +243,22 @@ object AdmobUtils {
         callBack: NativeCallback
     ) {
         Helper.parseBanner(holder)
-        if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
-            logE("Not EnableAds or No Internet")
-            shimmerFrameLayout?.stopShimmer()
-            viewGroup.gone()
-            callback.onBannerFailed("")
-            callBack.onNativeFailed("")
-            return
-        }
+
         if (holder.enable != "0" && activity.adOrg()) {
             performLoadAndShowBanner(activity, holder, viewGroup, callback)
             return
         }
 
-        // ===== OPTION 1: Banner → Native → BannerCollap → NativeCollap (Round-robin) =====
-        val option1Func = {
-            val indexWrapper = BannerIdIndexWrapper()
-            fun tryNextRound() {
-                val maxIndex = maxOf(
-                    holder.bannerIds.size,
-                    holder.nativeIds.size,
-                    holder.bannerCollapIds.size,
-                    holder.nativeIds.size
-                )
-
-                if (indexWrapper.bannerIndex >= maxIndex &&
-                    indexWrapper.nativeIndex >= maxIndex &&
-                    indexWrapper.bannerCollapIndex >= maxIndex &&
-                    indexWrapper.nativeCollapIndex >= maxIndex
-                ) {
-                    shimmerFrameLayout?.stopShimmer()
-                    viewGroup.gone()
-                    callback.onBannerFailed("All ads failed")
-                    callBack.onNativeFailed("All ads failed")
-                    return
-                }
-
-                tryBannerWithIndex(
-                    activity, holder, viewGroup,
-                    object : BannerCallback() {
-                        override fun onBannerLoaded(adSize: AdSize) {
-                            callback.onBannerLoaded(adSize)
-                        }
-
-                        override fun onBannerFailed(error: String) {}
-                        override fun onBannerClicked() {
-                            callback.onBannerClicked()
-                        }
-                    },
-                    indexWrapper.bannerIndex,
-                    onFailed = {
-                        tryNativeWithIndex(
-                            activity, holder, viewGroup,
-                            object : NativeCallback() {
-                                override fun onNativeReady(ad: NativeAd?) {
-                                    callBack.onNativeReady(ad)
-                                }
-
-                                override fun onNativeFailed(error: String) {}
-                                override fun onNativeClicked() {
-                                    callBack.onNativeClicked()
-                                }
-                            },
-                            indexWrapper.nativeIndex,
-                            onFailed = {
-                                tryBannerCollapWithIndex(
-                                    activity, holder, viewGroup,
-                                    object : BannerCallback() {
-                                        override fun onBannerLoaded(adSize: AdSize) {
-                                            callback.onBannerLoaded(adSize)
-                                        }
-
-                                        override fun onBannerFailed(error: String) {}
-                                        override fun onBannerClicked() {
-                                            callback.onBannerClicked()
-                                        }
-                                    },
-                                    indexWrapper.bannerCollapIndex,
-                                    onFailed = {
-                                        tryNativeCollapWithIndex(
-                                            activity, holder, viewGroup,
-                                            object : NativeCallback() {
-                                                override fun onNativeReady(ad: NativeAd?) {
-                                                    callBack.onNativeReady(ad)
-                                                }
-
-                                                override fun onNativeFailed(error: String) {}
-                                                override fun onNativeClicked() {
-                                                    callBack.onNativeClicked()
-                                                }
-                                            },
-                                            indexWrapper.nativeCollapIndex,
-                                            onFailed = {
-                                                indexWrapper.bannerIndex++
-                                                indexWrapper.nativeIndex++
-                                                indexWrapper.bannerCollapIndex++
-                                                indexWrapper.nativeCollapIndex++
-                                                softDelay {
-                                                    tryNextRound()
-                                                }
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        )
-                    }
-                )
-            }
-
-            tryNextRound()
-        }
-
-        // ===== OPTION 2: BannerCollap → NativeCollap → Banner → Native (Round-robin) =====
-        val option2Func = {
-            val indexWrapper = BannerIdIndexWrapper()
-
-            fun tryNextRound() {
-                val maxIndex = maxOf(
-                    holder.bannerCollapIds.size,
-                    holder.nativeIds.size,
-                    holder.bannerIds.size,
-                    holder.nativeIds.size
-                )
-
-                if (indexWrapper.bannerCollapIndex >= maxIndex &&
-                    indexWrapper.nativeCollapIndex >= maxIndex &&
-                    indexWrapper.bannerIndex >= maxIndex &&
-                    indexWrapper.nativeIndex >= maxIndex
-                ) {
-                    // All IDs exhausted
-                    shimmerFrameLayout?.stopShimmer()
-                    viewGroup.gone()
-                    callback.onBannerFailed("All ads failed")
-                    callBack.onNativeFailed("All ads failed")
-                    return
-                }
-
-                tryBannerCollapWithIndex(
-                    activity, holder, viewGroup,
-                    object : BannerCallback() {
-                        override fun onBannerLoaded(adSize: AdSize) {
-                            callback.onBannerLoaded(adSize)
-                        }
-
-                        override fun onBannerFailed(error: String) {}
-                        override fun onBannerClicked() {
-                            callback.onBannerClicked()
-                        }
-                    },
-                    indexWrapper.bannerCollapIndex,
-                    onFailed = {
-                        tryNativeCollapWithIndex(
-                            activity, holder, viewGroup,
-                            object : NativeCallback() {
-                                override fun onNativeReady(ad: NativeAd?) {
-                                    callBack.onNativeReady(ad)
-                                }
-
-                                override fun onNativeFailed(error: String) {}
-                                override fun onNativeClicked() {
-                                    callBack.onNativeClicked()
-                                }
-                            },
-                            indexWrapper.nativeCollapIndex,
-                            onFailed = {
-                                tryBannerWithIndex(
-                                    activity, holder, viewGroup,
-                                    object : BannerCallback() {
-                                        override fun onBannerLoaded(adSize: AdSize) {
-                                            callback.onBannerLoaded(adSize)
-                                        }
-
-                                        override fun onBannerFailed(error: String) {}
-                                        override fun onBannerClicked() {
-                                            callback.onBannerClicked()
-                                        }
-                                    },
-                                    indexWrapper.bannerIndex,
-                                    onFailed = {
-                                        tryNativeWithIndex(
-                                            activity, holder, viewGroup,
-                                            object : NativeCallback() {
-                                                override fun onNativeReady(ad: NativeAd?) {
-                                                    callBack.onNativeReady(ad)
-                                                }
-
-                                                override fun onNativeFailed(error: String) {}
-                                                override fun onNativeClicked() {
-                                                    callBack.onNativeClicked()
-                                                }
-                                            },
-                                            indexWrapper.nativeIndex,
-                                            onFailed = {
-                                                // All failed at this index, move to next round
-                                                indexWrapper.bannerCollapIndex++
-                                                indexWrapper.nativeCollapIndex++
-                                                indexWrapper.bannerIndex++
-                                                indexWrapper.nativeIndex++
-                                                softDelay {
-                                                    tryNextRound()
-                                                }
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        )
-                    }
-                )
-            }
-
-            tryNextRound()
-        }
-
-        // ===== OPTION 3: Native → Banner → NativeCollap → BannerCollap (Round-robin) =====
-        val option3Func = {
-            val indexWrapper = BannerIdIndexWrapper()
-
-            fun tryNextRound() {
-                val maxIndex = maxOf(
-                    holder.nativeIds.size,
-                    holder.bannerIds.size,
-                    holder.nativeIds.size,
-                    holder.bannerCollapIds.size
-                )
-
-                if (indexWrapper.nativeIndex >= maxIndex &&
-                    indexWrapper.bannerIndex >= maxIndex &&
-                    indexWrapper.nativeCollapIndex >= maxIndex &&
-                    indexWrapper.bannerCollapIndex >= maxIndex
-                ) {
-                    // All IDs exhausted
-                    shimmerFrameLayout?.stopShimmer()
-                    viewGroup.gone()
-                    callback.onBannerFailed("All ads failed")
-                    callBack.onNativeFailed("All ads failed")
-                    return
-                }
-
-                tryNativeWithIndex(
-                    activity, holder, viewGroup,
-                    object : NativeCallback() {
-                        override fun onNativeReady(ad: NativeAd?) {
-                            callBack.onNativeReady(ad)
-                        }
-
-                        override fun onNativeFailed(error: String) {}
-                        override fun onNativeClicked() {
-                            callBack.onNativeClicked()
-                        }
-                    },
-                    indexWrapper.nativeIndex,
-                    onFailed = {
-                        tryBannerWithIndex(
-                            activity, holder, viewGroup,
-                            object : BannerCallback() {
-                                override fun onBannerLoaded(adSize: AdSize) {
-                                    callback.onBannerLoaded(adSize)
-                                }
-
-                                override fun onBannerFailed(error: String) {}
-                                override fun onBannerClicked() {
-                                    callback.onBannerClicked()
-                                }
-                            },
-                            indexWrapper.bannerIndex,
-                            onFailed = {
-                                tryNativeCollapWithIndex(
-                                    activity, holder, viewGroup,
-                                    object : NativeCallback() {
-                                        override fun onNativeReady(ad: NativeAd?) {
-                                            callBack.onNativeReady(ad)
-                                        }
-
-                                        override fun onNativeFailed(error: String) {}
-                                        override fun onNativeClicked() {
-                                            callBack.onNativeClicked()
-                                        }
-                                    },
-                                    indexWrapper.nativeCollapIndex,
-                                    onFailed = {
-                                        tryBannerCollapWithIndex(
-                                            activity, holder, viewGroup,
-                                            object : BannerCallback() {
-                                                override fun onBannerLoaded(adSize: AdSize) {
-                                                    callback.onBannerLoaded(adSize)
-                                                }
-
-                                                override fun onBannerFailed(error: String) {}
-                                                override fun onBannerClicked() {
-                                                    callback.onBannerClicked()
-                                                }
-                                            },
-                                            indexWrapper.bannerCollapIndex,
-                                            onFailed = {
-                                                indexWrapper.nativeIndex++
-                                                indexWrapper.bannerIndex++
-                                                indexWrapper.nativeCollapIndex++
-                                                indexWrapper.bannerCollapIndex++
-                                                softDelay {
-                                                    tryNextRound()
-                                                }
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        )
-                    }
-                )
-            }
-
-            tryNextRound()
-        }
-
-        // ===== OPTION 4: NativeCollap → BannerCollap → Native → Banner (Round-robin) =====
-        val option4Func = {
-            val indexWrapper = BannerIdIndexWrapper()
-
-            fun tryNextRound() {
-                val maxIndex = maxOf(
-                    holder.nativeIds.size,
-                    holder.bannerCollapIds.size,
-                    holder.nativeIds.size,
-                    holder.bannerIds.size
-                )
-
-                if (indexWrapper.nativeCollapIndex >= maxIndex &&
-                    indexWrapper.bannerCollapIndex >= maxIndex &&
-                    indexWrapper.nativeIndex >= maxIndex &&
-                    indexWrapper.bannerIndex >= maxIndex
-                ) {
-                    // All IDs exhausted
-                    shimmerFrameLayout?.stopShimmer()
-                    viewGroup.gone()
-                    callback.onBannerFailed("All ads failed")
-                    callBack.onNativeFailed("All ads failed")
-                    return
-                }
-
-                tryNativeCollapWithIndex(
-                    activity, holder, viewGroup,
-                    object : NativeCallback() {
-                        override fun onNativeReady(ad: NativeAd?) {
-                            callBack.onNativeReady(ad)
-                        }
-
-                        override fun onNativeFailed(error: String) {}
-                        override fun onNativeClicked() {
-                            callBack.onNativeClicked()
-                        }
-                    },
-                    indexWrapper.nativeCollapIndex,
-                    onFailed = {
-                        tryBannerCollapWithIndex(
-                            activity, holder, viewGroup,
-                            object : BannerCallback() {
-                                override fun onBannerLoaded(adSize: AdSize) {
-                                    callback.onBannerLoaded(adSize)
-                                }
-
-                                override fun onBannerFailed(error: String) {}
-                                override fun onBannerClicked() {
-                                    callback.onBannerClicked()
-                                }
-                            },
-                            indexWrapper.bannerCollapIndex,
-                            onFailed = {
-                                tryNativeWithIndex(
-                                    activity, holder, viewGroup,
-                                    object : NativeCallback() {
-                                        override fun onNativeReady(ad: NativeAd?) {
-                                            callBack.onNativeReady(ad)
-                                        }
-
-                                        override fun onNativeFailed(error: String) {}
-                                        override fun onNativeClicked() {
-                                            callBack.onNativeClicked()
-                                        }
-                                    },
-                                    indexWrapper.nativeIndex,
-                                    onFailed = {
-                                        tryBannerWithIndex(
-                                            activity, holder, viewGroup,
-                                            object : BannerCallback() {
-                                                override fun onBannerLoaded(adSize: AdSize) {
-                                                    callback.onBannerLoaded(adSize)
-                                                }
-
-                                                override fun onBannerFailed(error: String) {}
-                                                override fun onBannerClicked() {
-                                                    callback.onBannerClicked()
-                                                }
-                                            },
-                                            indexWrapper.bannerIndex,
-                                            onFailed = {
-                                                // All failed at this index, move to next round
-                                                indexWrapper.nativeCollapIndex++
-                                                indexWrapper.bannerCollapIndex++
-                                                indexWrapper.nativeIndex++
-                                                indexWrapper.bannerIndex++
-                                                softDelay {
-                                                    tryNextRound()
-                                                }
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        )
-                    }
-                )
-            }
-
-            tryNextRound()
-        }
-
-        // Remove previous collapse views before starting new ad loading
-        destroyBannerCollapView()
-        runCatching {
-            val decorView = activity.window.decorView as ViewGroup
-            val existingNativeCollap = decorView.findViewWithTag<View>("native_collap_view")
-            existingNativeCollap?.let { decorView.removeView(it) }
-        }
-
-        val tagView = activity.layoutInflater.inflate(R.layout.layout_banner_loading, null, false)
-        runCatching {
-            viewGroup.removeAllViews()
-            viewGroup.addView(tagView, 0)
-        }
-        viewGroup.visible()
-        shimmerFrameLayout = tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
-        shimmerFrameLayout?.startShimmer()
-
         when (holder.enable) {
-            "1" -> option1Func()  //* Banner -> Native -> BannerCollap -> NativeCollap
+            "1" -> performLoadAndShowBanner(activity, holder, viewGroup, callback)  //* Banner
 
-            "2" -> option2Func()  //* BannerCollap -> NativeCollap -> Banner -> Native
+            "2" -> performLoadAndShowBannerCollap(activity, holder, viewGroup, callback) //* Banner Collap
 
-            "3" -> option3Func()  //* Native -> Banner -> NativeCollap -> BannerCollap
+            "3" -> performLoadAndShowNative(activity, viewGroup, holder, callBack) //* Native Small
 
-            "4" -> option4Func()  //* NativeCollap -> BannerCollap -> Native -> Banner
+            "4" -> performLoadAndShowNativeCollap(activity, holder, viewGroup, callBack) //* Native Collap
 
             else -> {
-                shimmerFrameLayout?.stopShimmer()
                 viewGroup.gone()
                 callback.onBannerFailed("")
             }
@@ -1877,11 +276,7 @@ object AdmobUtils {
     }
 
     @JvmStatic
-    fun showInterstitial(
-        activity: AppCompatActivity,
-        holder: InterHolder,
-        callback: InterCallback
-    ) {
+    fun showInterstitial(activity: AppCompatActivity, holder: InterHolder, callback: InterCallback) {
         Helper.parseInter(holder)
         destroyBannerCollapView()
         isAdShowing = false
@@ -1902,11 +297,7 @@ object AdmobUtils {
     }
 
     @JvmStatic
-    fun loadAndShowReward(
-        activity: AppCompatActivity,
-        holder: RewardHolder,
-        callback: RewardCallback
-    ) {
+    fun loadAndShowReward(activity: AppCompatActivity, holder: RewardHolder, callback: RewardCallback) {
         Helper.parseReward(holder)
         mRewardedAd = null
         isAdShowing = false
@@ -2091,71 +482,40 @@ object AdmobUtils {
     }
 
     @JvmStatic
-    fun showNative(
-        activity: Activity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallbackSimple
-    ) {
+    fun showNative(activity: Activity, holder: NativeHolder, viewGroup: ViewGroup, callback: NativeCallbackSimple) {
         Helper.parseNative(holder)
         if (holder.enable == "0" || activity.adOrg()) {
             viewGroup.gone()
-            callback.onNativeFailed("")
         } else {
             performShowNative(activity, viewGroup, holder, callback)
         }
     }
 
+//    @JvmStatic
+//    fun loadAndShowNativeCustom(activity: Activity, holder: NativeHolder, viewGroup: ViewGroup, callback: NativeCallback) {
+//        Parser.parseNative(holder)
+//        when (holder.enable) {
+//            "0" -> viewGroup.gone()
+//            "1" -> performLoadAndShowNative(activity, viewGroup, holder, callback)
+//        }
+//    }
+
     @JvmStatic
-    fun loadAndShowNative(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback
-    ) {
+    fun loadAndShowNative(activity: AppCompatActivity, holder: NativeHolder, viewGroup: ViewGroup, callback: NativeCallback) {
         Helper.parseNative(holder)
-        if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
-            logE("Not EnableAds or No Internet")
-            viewGroup.gone()
-            callback.onNativeFailed("")
-            return
-        }
         if (activity.adOrg()) {
             viewGroup.gone()
             callback.onNativeFailed("")
             return
         }
         when (holder.enable) {
+            "0" -> viewGroup.gone()
             "1" -> performLoadAndShowNative(activity, viewGroup, holder, callback)
-
-            "2" -> performLoadAndShowNativeResizeSmall(
-                activity,
-                holder,
-                viewGroup,
-                callback
-            )
-
-            "3" -> performLoadAndShowNativeResize(
-                activity,
-                holder,
-                viewGroup,
-                callback
-            )
-
-            else -> {
-                viewGroup.gone()
-                callback.onNativeFailed("")
-            }
         }
     }
 
     @JvmStatic
-    fun loadAndShowNativeCollap(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback
-    ) {
+    fun loadAndShowNativeCollap(activity: AppCompatActivity, holder: NativeHolder, viewGroup: ViewGroup, callback: NativeCallback) {
         Helper.parseNative(holder)
         if (activity.adOrg()) {
             viewGroup.gone()
@@ -2171,9 +531,6 @@ object AdmobUtils {
 
     @JvmStatic
     fun loadNativeFull(context: Context, holder: NativeHolder, callback: NativeCallback) {
-        if (!isEnableAds || !isNetworkConnected(context)) {
-            callback.onNativeFailed("")
-        }
         Helper.parseNative(holder)
         if (holder.enable == "0" || context.adOrg()) {
             callback.onNativeFailed("Not show native")
@@ -2193,12 +550,7 @@ object AdmobUtils {
     }
 
     @JvmStatic
-    fun showNativeFull(
-        activity: Activity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallbackSimple
-    ) {
+    fun showNativeFull(activity: Activity, holder: NativeHolder, viewGroup: ViewGroup, callback: NativeCallbackSimple) {
         Helper.parseNative(holder)
         if (holder.enable == "0" || activity.adOrg()) {
             callback.onNativeFailed("Not show native")
@@ -2209,12 +561,7 @@ object AdmobUtils {
     }
 
     @JvmStatic
-    fun loadAndShowNativeFull(
-        activity: Activity,
-        viewGroup: ViewGroup,
-        holder: NativeHolder,
-        callback: NativeCallbackSimple
-    ) {
+    fun loadAndShowNativeFull(activity: Activity, viewGroup: ViewGroup, holder: NativeHolder, callback: NativeCallbackSimple) {
         Helper.parseNative(holder)
         if (holder.enable == "0" || activity.adOrg()) {
             viewGroup.gone()
@@ -2236,58 +583,23 @@ object AdmobUtils {
             nativeLanguage1.nativeTemplate = holder.nativeTemplate
             nativeLanguage1.loadingSize = holder.loadingSize
             holder.holders.add(nativeLanguage1)
-            obj["native_language1"]?.asJsonObject?.let {
-                nativeLanguage1.nativeUnit = parseUnitIds(it)
-            }
+            obj["native_language1"]?.asJsonObject?.let { nativeLanguage1.nativeUnit = parseUnitIds(it) }
 
             val nativeLanguage2 = NativeHolder("${holder.key}2")
             holder.holders.add(nativeLanguage2)
-            obj["native_language2"]?.asJsonObject?.let {
-                nativeLanguage2.nativeUnit = parseUnitIds(it)
-            }
+            obj["native_language2"]?.asJsonObject?.let { nativeLanguage2.nativeUnit = parseUnitIds(it) }
+
             performLoadNative(context, holder.holders[0], callback)
-            softDelay {
-                performLoadNative(context, holder.holders[1], callback)
-            }
+            performLoadNative(context, holder.holders[1], callback)
         }
     }
 
-    /**
-     * Kiểm tra xem NativeMultiHolder có đang load hay không
-     * @return true nếu có ít nhất một holder đang loading
-     */
     @JvmStatic
-    fun isNativeLanguageLoading(holder: NativeMultiHolder): Boolean {
-        return holder.holders.any { it.isNativeLoading }
-    }
-
-    /**
-     * Kiểm tra xem NativeMultiHolder đã load xong tất cả hay chưa
-     * @return true nếu tất cả holders đều đã ready (không loading và có nativeAd)
-     */
-    @JvmStatic
-    fun isNativeLanguageReady(holder: NativeMultiHolder): Boolean {
-        return holder.holders.isNotEmpty() &&
-                holder.holders.all { !it.isNativeLoading && it.isNativeReady() }
-    }
-
-    @JvmStatic
-    fun showNativeLanguage(
-        activity: Activity,
-        holder: NativeMultiHolder,
-        viewGroup: ViewGroup,
-        index: Int,
-        callback: NativeCallbackSimple
-    ) {
+    fun showNativeLanguage(activity: Activity, holder: NativeMultiHolder, viewGroup: ViewGroup, index: Int, callback: NativeCallbackSimple) {
         log("holder language: $holder")
-        if (!isEnableAds || !isNetworkConnected(activity)) {
-            callback.onNativeFailed("")
-            return
-        }
         if (holder.enable == "0" || activity.adOrg()) {
             logE("Native language disabled")
             viewGroup.gone()
-            callback.onNativeFailed("")
         } else {
             val nativeHolder = holder.holders.getOrNull(index)
             if (nativeHolder == null) {
@@ -2296,76 +608,12 @@ object AdmobUtils {
                 return
             }
             if (index == 1) nativeHolder.customLayout(R.layout.native_template_medium_language)
-
-            val wrapperCallback = object : NativeCallbackSimple() {
-                override fun onNativeLoaded() {
-                    viewGroup.visible()
-                    callback.onNativeLoaded()
-                }
-
-                override fun onNativeFailed(error: String) {
-                    logE("performShowNative failed, retrying with loadAndShowNative")
-                    if (activity is AppCompatActivity) {
-                        performLoadAndShowNativeForLanguageIntro(
-                            activity,
-                            viewGroup,
-                            nativeHolder,
-                            callback
-                        )
-                    } else {
-                        callback.onNativeFailed(error)
-                    }
-                }
-            }
-            performShowNative(activity, viewGroup, nativeHolder, wrapperCallback)
+            performShowNative(activity, viewGroup, nativeHolder, callback)
         }
-    }
-
-    private fun performLoadAndShowNativeForLanguageIntro(
-        activity: AppCompatActivity,
-        viewGroup: ViewGroup,
-        holder: NativeHolder,
-        callback: NativeCallbackSimple
-    ) {
-        viewGroup.visible()
-        holder.loadTimestamp = 0
-        val loadingLayout = nativeLoadingId(holder)
-        val tagView = LayoutInflater.from(activity).inflate(loadingLayout, null, false)
-        runCatching {
-            viewGroup.removeAllViews()
-            viewGroup.addView(tagView, 0)
-        }
-
-        val shimmerFrameLayout =
-            tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
-        shimmerFrameLayout.startShimmer()
-
-        holder.loadTimestamp = System.currentTimeMillis()
-        holder.isNativeLoading = true
-        val loadAndShowCallback = object : NativeCallback() {
-            override fun onNativeReady(ad: NativeAd?) {
-                holder.isNativeLoading = false
-                viewGroup.visible()
-                callback.onNativeLoaded()
-            }
-
-            override fun onNativeFailed(error: String) {
-                holder.isNativeLoading = false
-                callback.onNativeFailed(error)
-            }
-
-            override fun onNativeClicked() {
-            }
-        }
-        tryLoadAndShowNative(activity, holder, viewGroup, loadAndShowCallback, 0)
     }
 
     @JvmStatic
     fun loadNativeIntro(context: Context, holder: NativeMultiHolder, callback: NativeCallback) {
-        if (!isEnableAds || !isNetworkConnected(context)) {
-            callback.onNativeFailed("")
-            return
-        }
         Helper.parseNativeMulti(holder)
         val obj = Helper.jsonObject()?.get(holder.key)?.asJsonObject ?: return
         if (holder.enable == "0" || context.adOrg()) {
@@ -2389,37 +637,9 @@ object AdmobUtils {
             }
 
             if (holder.enable.contains("1")) performLoadNative(context, nativeIntro1, callback)
-            if (holder.enable.contains("2")) softDelay {
-                performLoadNative(
-                    context,
-                    nativeIntro2,
-                    callback
-                )
-            }
-            if (holder.enable.contains("3")) softDelay2 {
-                performLoadNative(
-                    context,
-                    nativeIntro3,
-                    callback
-                )
-            }
+            if (holder.enable.contains("2")) performLoadNative(context, nativeIntro2, callback)
+            if (holder.enable.contains("3")) performLoadNative(context, nativeIntro3, callback)
         }
-    }
-
-
-    @JvmStatic
-    fun isNativeIntroLoading(holder: NativeMultiHolder): Boolean {
-        return holder.holders.any { it.isNativeLoading }
-    }
-
-    /**
-     * Kiểm tra xem NativeIntro đã load xong tất cả hay chưa
-     * @return true nếu tất cả holders đều đã ready (không loading và có nativeAd)
-     */
-    @JvmStatic
-    fun isNativeIntroReady(holder: NativeMultiHolder): Boolean {
-        return holder.holders.isNotEmpty() &&
-                holder.holders.all { !it.isNativeLoading && it.isNativeReady() }
     }
 
     @JvmStatic
@@ -2430,10 +650,6 @@ object AdmobUtils {
         index: Int,
         callback: NativeCallbackSimple
     ) {
-        if (!isEnableAds || !isNetworkConnected(activity)) {
-            callback.onNativeFailed("")
-            return
-        }
         if (holder.enable == "0" || activity.adOrg()) {
             logE("showNativeIntros: NativeIntro disabled")
             return
@@ -2443,44 +659,26 @@ object AdmobUtils {
             callback.onNativeFailed("")
             return
         }
-        val wrapperCallback = object : NativeCallbackSimple() {
-            override fun onNativeLoaded() {
-                viewGroup.visible()
-                callback.onNativeLoaded()
-            }
 
-            override fun onNativeFailed(error: String) {
-                logE("performShowNative failed, retrying with loadAndShowNative")
-                if (activity is AppCompatActivity) {
-                    performLoadAndShowNativeForLanguageIntro(
-                        activity,
-                        viewGroup,
-                        nativeHolder,
-                        callback
-                    )
-                } else {
-                    callback.onNativeFailed(error)
-                }
-            }
-        }
         if (holder.enable.contains(index.toString())) {
-            performShowNative(activity, viewGroup, nativeHolder, wrapperCallback)
+            performShowNative(activity, viewGroup, nativeHolder, callback)
         }
     }
 
     @JvmStatic
-    fun loadAndShowInterstitial(
-        activity: AppCompatActivity,
-        holder: InterHolder,
-        onFinished: () -> Unit
-    ) {
+    fun isNativeIntroLoading(holder: NativeMultiHolder): Boolean {
+        return holder.holders.any { it.isNativeLoading }
+    }
+
+    @JvmStatic
+    fun loadAndShowInterstitial(activity: AppCompatActivity, holder: InterHolder, onFinished: () -> Unit) {
         Helper.parseInter(holder)
-        if (!isEnableAds || !isNetworkConnected(activity) || holder.enable == "0") {
-            onFinished()
-            return
-        }
         if (isNativeInterShowing(activity)) {
             logE("Native Inter is showing")
+            return
+        }
+        if (!isEnableAds || !isNetworkConnected(activity)) {
+            onFinished()
             return
         }
         holder.count++
@@ -2492,6 +690,11 @@ object AdmobUtils {
         }
 
         val splashFallback = Helper.settings()?.get("splash_fallback")?.asString
+        if(splashSuccess && holder.key == splashFallback?.lowercase()) {
+            logE("${holder.key} disabled as splash fallback")
+            onFinished()
+            return
+        }
 
         runCatching {
             val tag = "native_full_view"
@@ -2500,12 +703,10 @@ object AdmobUtils {
         }
         val callback = object : InterCallback() {
             override fun onInterClosed() {
-                dismissAdDialog()
                 onFinished()
             }
 
             override fun onInterFailed(error: String) {
-                dismissAdDialog()
                 onFinished()
             }
         }
@@ -2515,250 +716,19 @@ object AdmobUtils {
             performLoadAndShowInterstitial(activity, holder, callback)
             return
         }
-        refreshJob?.cancel()
-
-        // Show loading dialog once for all options
-        if (holder.showLoading && holder.key != "ads_splash") {
-            dialogLoading(activity)
-        }
-
-        val indexWrapper = IdIndexWrapper(
-            appOpenIndex = -1,
-            interIndex = 0,
-            nativeIndex = 0
-        )
-
-        lateinit var tryInterOption2Func: () -> Unit
-
-        val tryInterOption3Func: () -> Unit = {
-            softDelay {
-                tryInterOption3(activity, holder, callback, indexWrapper) {
-                    logE("loadAndShowInter: all options failed")
-                    dismissAdDialog()
-                    onFinished()
-                }
-            }
-        }
-
-        tryInterOption2Func = {
-            softDelay {
-                tryInterOption2(activity, holder, callback, indexWrapper, tryInterOption3Func)
-            }
-        }
-
-        val tryInterOption1Func: () -> Unit = {
-            softDelay {
-                tryInterOption1(activity, holder, callback, indexWrapper, tryInterOption2Func)
-            }
-        }
-
         when (holder.enable) {
-            "1" -> tryInterOption1Func()
+            "1" -> performLoadAndShowInterstitial(activity, holder, callback)
 
-            "2" -> tryInterOption2Func()
+            "2" -> performLoadAndShowNativeInter(activity, holder, callback)
 
-            "3" -> tryInterOption3Func()
+            "3" -> performLoadAndShowInterWithNative(activity, holder, callback)
 
             else -> {
-                if (!splashSuccess && holder.key == splashFallback?.lowercase()) {
-                    tryInterOption1Func()
-                    return
-                }
                 logE("loadAndShowInter: inter is disabled")
-                dismissAdDialog()
                 onFinished()
             }
         }
 
-    }
-
-    private fun tryInterOption1(
-        activity: AppCompatActivity,
-        holder: InterHolder,
-        callback: InterCallback,
-        indexWrapper: IdIndexWrapper,
-        tryInterOption2: () -> Unit
-    ) {
-        if (holder.interIds.isEmpty() || indexWrapper.interIndex >= holder.interIds.size) {
-            tryInterOption2()
-            return
-        }
-
-        val newCallback = object : InterCallback() {
-            override fun onInterClosed() {
-                callback.onInterClosed()
-            }
-
-            override fun onInterFailed(error: String) {
-                indexWrapper.interIndex++
-                tryInterOption2()
-            }
-
-            override fun onInterLoaded() {
-                callback.onInterLoaded()
-            }
-
-            override fun onInterShowed() {
-                dismissAdDialog()
-                callback.onInterShowed()
-            }
-
-            override fun onStartAction() {
-                callback.onStartAction()
-            }
-        }
-
-        performLoadAndShowInterstitialWithSingleId(
-            activity,
-            holder,
-            newCallback,
-            indexWrapper.interIndex
-        )
-    }
-
-    private fun tryInterOption2(
-        activity: AppCompatActivity,
-        holder: InterHolder,
-        callback: InterCallback,
-        indexWrapper: IdIndexWrapper,
-        tryInterOption3: () -> Unit
-    ) {
-        val nativeHolder = NativeHolder(holder.key).apply {
-            enable = holder.enable
-            nativeUnit = holder.nativeUnit
-            nativeTemplate = holder.nativeTemplate
-            loadingSize = holder.loadingSize
-        }
-        Helper.parseNative(nativeHolder)
-        if (nativeHolder.nativeIds.isEmpty() || indexWrapper.nativeIndex >= nativeHolder.nativeIds.size) {
-            tryInterOption3()
-            return
-        }
-
-        val singleNativeHolder = NativeHolder(holder.key).apply {
-            enable = holder.enable
-            nativeUnit = nativeHolder.nativeUnit?.let { unit ->
-                AdUnit(
-                    name = unit.name,
-                    id1 = nativeHolder.nativeIds.getOrNull(indexWrapper.nativeIndex) ?: "",
-                    id2 = "",
-                    id3 = ""
-                )
-            }
-            nativeTemplate = nativeHolder.nativeTemplate
-            loadingSize = nativeHolder.loadingSize
-        }
-        Helper.parseNative(singleNativeHolder)
-
-        val newCallback = object : InterCallback() {
-            override fun onInterClosed() {
-                callback.onInterClosed()
-            }
-
-            override fun onInterFailed(error: String) {
-                indexWrapper.nativeIndex++
-                tryInterOption3()
-            }
-
-            override fun onInterLoaded() {
-                callback.onInterLoaded()
-            }
-
-            override fun onInterShowed() {
-                dismissAdDialog()
-                callback.onInterShowed()
-            }
-
-            override fun onStartAction() {
-                callback.onStartAction()
-            }
-        }
-
-        performLoadAndShowNativeInterWithSingleId(activity, singleNativeHolder, newCallback)
-    }
-
-    private fun tryInterOption3(
-        activity: AppCompatActivity,
-        holder: InterHolder,
-        callback: InterCallback,
-        indexWrapper: IdIndexWrapper,
-        onAllFailed: () -> Unit
-    ) {
-        val tryInterOption2Func: () -> Unit = {
-            softDelay {
-                tryInterOption2(activity, holder, callback, indexWrapper) {
-                    tryInterOption3(activity, holder, callback, indexWrapper, onAllFailed)
-                }
-            }
-        }
-        if ((holder.interIds.isEmpty() || indexWrapper.interIndex >= holder.interIds.size) &&
-            (holder.nativeIds.isEmpty() || indexWrapper.nativeIndex >= holder.nativeIds.size)
-        ) {
-            onAllFailed()
-            return
-        } else if (holder.interIds.isEmpty() || indexWrapper.interIndex >= holder.interIds.size) {
-            tryInterOption2Func()
-            return
-        }
-
-        val newHolder = InterHolder(holder.key).apply {
-            enable = holder.enable
-            showLoading = holder.showLoading
-            waitTime = holder.waitTime
-            interUnit = holder.interUnit?.let { unit ->
-                AdUnit(
-                    name = unit.name,
-                    id1 = holder.interIds.getOrNull(indexWrapper.interIndex) ?: "",
-                    id2 = "",
-                    id3 = ""
-                )
-            }
-            nativeUnit = holder.nativeUnit?.let { unit ->
-                AdUnit(
-                    name = unit.name,
-                    id1 = holder.nativeIds.getOrNull(indexWrapper.nativeIndex) ?: "",
-                    id2 = "",
-                    id3 = ""
-                )
-            }
-        }
-        Helper.parseInter(newHolder)
-        val tryInterOption1Func: () -> Unit = {
-            softDelay {
-                tryInterOption1(activity, holder, callback, indexWrapper, tryInterOption2Func)
-            }
-        }
-
-        val newCallback = object : InterCallback() {
-            override fun onInterClosed() {
-                callback.onInterClosed()
-            }
-
-            override fun onInterFailed(error: String) {
-                indexWrapper.interIndex++
-                tryInterOption1Func()
-            }
-
-            override fun onInterLoaded() {
-                callback.onInterLoaded()
-            }
-
-            override fun onInterShowed() {
-                dismissAdDialog()
-                callback.onInterShowed()
-            }
-
-            override fun onStartAction() {
-                callback.onStartAction()
-            }
-        }
-
-        performLoadAndShowInterWithNativeWithSingleId(
-            activity,
-            newHolder,
-            indexWrapper,
-            newCallback
-        )
     }
 
     @JvmStatic
@@ -2829,7 +799,15 @@ object AdmobUtils {
                 onFinished()
             }
 
-            else -> performLoadAndShowNativeInter(activity, holder, onFinished)
+            else -> performLoadAndShowNativeInter(activity, holder, object : InterCallback() {
+                override fun onInterClosed() {
+                    onFinished()
+                }
+
+                override fun onInterFailed(error: String) {
+                    onFinished()
+                }
+            })
         }
 
     }
@@ -2837,15 +815,14 @@ object AdmobUtils {
     private fun performLoadAndShowNativeInter(
         activity: AppCompatActivity,
         holder: NativeHolder,
-        callback: () -> Unit,
+        callback: InterCallback,
         showShimmer: Boolean = true
     ) {
         if (isPremium) {
-            callback()
+            callback.onInterClosed()
             return
         }
-        val container =
-            activity.layoutInflater.inflate(R.layout.layout_native_inter_container, null, false)
+        val container = activity.layoutInflater.inflate(R.layout.layout_native_inter_container, null, false)
         val viewGroup = container.findViewById<FrameLayout>(R.id.viewGroup)
         val btnClose = container.findViewById<View>(R.id.ad_close)
         val tvTimer = container.findViewById<TextView>(R.id.ad_timer)
@@ -2859,7 +836,7 @@ object AdmobUtils {
             if (showShimmer) decorView.addView(container)
         } catch (e: Exception) {
             logE("Native Inter: ${e.message}")
-            callback()
+            callback.onInterFailed(e.message.toString())
             return
         }
 
@@ -2871,7 +848,7 @@ object AdmobUtils {
             OnResumeUtils.setEnableOnResume(true)
             container.gone()
             runCatching { decorView.removeView(container) }
-            callback()
+            callback.onInterClosed()
         }
 
         val handler = Handler(Looper.getMainLooper())
@@ -2879,8 +856,8 @@ object AdmobUtils {
             container.gone()
             runCatching { decorView.removeView(container) }
             logE("Native Inter Timeout")
-            callback()
-        }, 10000) //* Timeout 15s for loading NativeFull
+            callback.onInterFailed("")
+        }, 15000) //* Timeout 15s for loading NativeFull
 
         performLoadAndShowNativeFull(activity, viewGroup, holder, object : NativeCallbackSimple() {
             override fun onNativeLoaded() {
@@ -2888,7 +865,7 @@ object AdmobUtils {
                     runCatching {
                         decorView.addView(container)
                     }.onFailure {
-                        callback()
+                        callback.onInterFailed("Native Inter failed to addView")
                     }
                 }
                 btnClose.visible()
@@ -2900,22 +877,17 @@ object AdmobUtils {
                 container.gone()
                 runCatching { decorView.removeView(container) }
                 OnResumeUtils.setEnableOnResume(true)
-                callback()
+                callback.onInterFailed(error)
             }
         })
     }
 
-    private fun performLoadAndShowInterWithNative(
-        activity: AppCompatActivity,
-        holder: InterHolder,
-        callback: InterCallback
-    ) {
+    private fun performLoadAndShowInterWithNative(activity: AppCompatActivity, holder: InterHolder, callback: InterCallback) {
         if (isPremium) {
             callback.onInterClosed()
             return
         }
-        val container =
-            activity.layoutInflater.inflate(R.layout.layout_native_inter_container, null, false)
+        val container = activity.layoutInflater.inflate(R.layout.layout_native_inter_container, null, false)
         val viewGroup = container.findViewById<FrameLayout>(R.id.viewGroup)
         val btnClose = container.findViewById<View>(R.id.ad_close)
         val tvTimer = container.findViewById<TextView>(R.id.ad_timer)
@@ -2975,24 +947,20 @@ object AdmobUtils {
                     }
 
                     destroyBannerCollapView()
-                    performShowNativeFull(
-                        activity,
-                        viewGroup,
-                        holder,
-                        object : NativeCallbackSimple() {
-                            override fun onNativeLoaded() {
-                            }
+                    performShowNativeFull(activity, viewGroup, holder, object : NativeCallbackSimple() {
+                        override fun onNativeLoaded() {
+                        }
 
-                            override fun onNativeFailed(error: String) {
-                                container.gone()
-                                runCatching { decorView.removeView(container) }
-                                OnResumeUtils.setEnableOnResume(true)
-                                holder.nativeAd.removeObservers(activity)
-                                holder.nativeAd.value = null
-                                callback.onInterFailed(error)
-                            }
+                        override fun onNativeFailed(error: String) {
+                            container.gone()
+                            runCatching { decorView.removeView(container) }
+                            OnResumeUtils.setEnableOnResume(true)
+                            holder.nativeAd.removeObservers(activity)
+                            holder.nativeAd.value = null
+                            callback.onInterFailed(error)
+                        }
 
-                        })
+                    })
                 } else {
                     container.gone()
                     runCatching { decorView.removeView(container) }
@@ -3011,11 +979,7 @@ object AdmobUtils {
         })
     }
 
-    private fun performLoadInterstitial(
-        context: Context,
-        holder: InterHolder,
-        callback: LoadInterCallback
-    ) {
+    private fun performLoadInterstitial(context: Context, holder: InterHolder, callback: LoadInterCallback) {
         isAdShowing = false
         if (!isEnableAds || !isNetworkConnected(context) || isPremium) {
             logE("Not EnableAds or No Internet")
@@ -3038,12 +1002,7 @@ object AdmobUtils {
         tryLoadInter(context, holder, callback)
     }
 
-    private fun tryLoadInter(
-        context: Context,
-        holder: InterHolder,
-        callback: LoadInterCallback,
-        index: Int = 0
-    ) {
+    private fun tryLoadInter(context: Context, holder: InterHolder, callback: LoadInterCallback, index: Int = 0) {
         val adIds = holder.interIds
         if (index >= adIds.size) { //* Failed
             isAdShowing = false
@@ -3062,15 +1021,14 @@ object AdmobUtils {
                 log("InterLoaded")
                 holder.inter.value = interstitialAd
                 holder.isInterLoading = false
-                interstitialAd.setOnPaidEventListener { adValue ->
+                interstitialAd.setOnPaidEventListener {
+                    logE( "onPaidEventListener: inter ")
                     SolarUtils.trackAdImpression(
-                        ad = adValue,
+                        ad = it,
                         adUnit = interstitialAd.adUnitId,
                         format = "interstitial"
                     )
-                    val adapterInfo = interstitialAd.responseInfo.loadedAdapterResponseInfo
-                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Interstitial")
-                    AdjustUtils.postRevenueAdjust(context, adValue, interstitialAd.adUnitId)
+                    AdjustUtils.postRevenueAdjust(context, it, interstitialAd.adUnitId)
 
                 }
                 callback.onInterLoaded(interstitialAd, false)
@@ -3078,7 +1036,6 @@ object AdmobUtils {
 
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                 logE("InterLoadFailed: ${loadAdError.message}")
-                tryLoadInter(context, holder, callback, index + 1)
                 val latency = nowMs() - loadStart
                 SolarUtils.trackAdLoadFailure(
                     adUnit = adId,
@@ -3087,15 +1044,12 @@ object AdmobUtils {
                     latencyMs = latency,
                     waterfallIndex = index
                 )
+                tryLoadInter(context, holder, callback, index + 1)
             }
         })
     }
 
-    private fun performShowInterstitial(
-        activity: AppCompatActivity,
-        holder: InterHolder,
-        callback: InterCallback
-    ) {
+    private fun performShowInterstitial(activity: AppCompatActivity, holder: InterHolder, callback: InterCallback) {
         if (isPremium) {
             callback.onInterClosed()
             return
@@ -3124,7 +1078,7 @@ object AdmobUtils {
 
         //Inter is Loading...
         if (holder.isInterLoading) {
-            if (holder.showLoading && holder.key != "ads_splash") {
+            if (holder.showLoading) {
                 dialogLoading(activity)
             }
             holder.inter.observe((activity as LifecycleOwner)) { interstitialAd: InterstitialAd? ->
@@ -3132,41 +1086,35 @@ object AdmobUtils {
                     holder.inter.removeObservers((activity as LifecycleOwner))
                     Handler(Looper.getMainLooper()).postDelayed({
                         log("showing inter...")
-                        interstitialAd.fullScreenContentCallback =
-                            object : FullScreenContentCallback() {
-                                override fun onAdDismissedFullScreenContent() {
-                                    isAdShowing = false
-                                    OnResumeUtils.setEnableOnResume(true)
-                                    holder.inter.removeObservers((activity as LifecycleOwner))
-                                    holder.inter.value = null
-                                    callback.onInterClosed()
-                                    dismissAdDialog()
-                                    log("InterDismissedFullScreenContent")
-                                }
-
-                                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                                    logE("InterFailedToLoad" + adError.message)
-                                    SolarUtils.trackAdShowFailure(
-                                        adUnit = interstitialAd.adUnitId,
-                                        format = formatNameForSolar("interstitial"),
-                                        adError = adError
-                                    )
-                                    isAdShowing = false
-                                    OnResumeUtils.setEnableOnResume(true)
-                                    dismissAdDialog()
-                                    holder.inter.removeObservers((activity as LifecycleOwner))
-                                    holder.inter.value = null
-                                    handler.removeCallbacksAndMessages(null)
-                                    callback.onInterFailed(adError.message)
-                                }
-
-                                override fun onAdShowedFullScreenContent() {
-                                    handler.removeCallbacksAndMessages(null)
-                                    isAdShowing = true
-                                    callback.onInterShowed()
-
-                                }
+                        interstitialAd.fullScreenContentCallback = object : FullScreenContentCallback() {
+                            override fun onAdDismissedFullScreenContent() {
+                                isAdShowing = false
+                                OnResumeUtils.setEnableOnResume(true)
+                                holder.inter.removeObservers((activity as LifecycleOwner))
+                                holder.inter.value = null
+                                callback.onInterClosed()
+                                dismissAdDialog()
+                                log("InterDismissedFullScreenContent")
                             }
+
+                            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                                logE("InterFailedToLoad" + adError.message)
+                                isAdShowing = false
+                                OnResumeUtils.setEnableOnResume(true)
+                                dismissAdDialog()
+                                holder.inter.removeObservers((activity as LifecycleOwner))
+                                holder.inter.value = null
+                                handler.removeCallbacksAndMessages(null)
+                                callback.onInterFailed(adError.message)
+                            }
+
+                            override fun onAdShowedFullScreenContent() {
+                                handler.removeCallbacksAndMessages(null)
+                                isAdShowing = true
+                                callback.onInterShowed()
+
+                            }
+                        }
                         implementShowInterstitial(activity, interstitialAd, callback)
                     }, 400)
                 } else {
@@ -3183,57 +1131,45 @@ object AdmobUtils {
             callback.onInterFailed("")
             handler.removeCallbacksAndMessages(null)
         } else {
-            if (holder.showLoading && holder.key != "ads_splash") {
+            if (holder.showLoading) {
                 dialogLoading(activity)
             }
             Handler(Looper.getMainLooper()).postDelayed({
                 log("showing inter...")
-                holder.inter.value?.fullScreenContentCallback =
-                    object : FullScreenContentCallback() {
-                        override fun onAdDismissedFullScreenContent() {
-                            isAdShowing = false
-                            OnResumeUtils.setEnableOnResume(true)
-                            holder.inter.removeObservers((activity as LifecycleOwner))
-                            holder.inter.value = null
-                            dismissAdDialog()
-                            callback.onInterClosed()
-                        }
-
-                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            logE("InterFailedToLoad" + adError.message)
-                            holder.inter.value?.let { interAd ->
-                                SolarUtils.trackAdShowFailure(
-                                    adUnit = interAd.adUnitId,
-                                    format = formatNameForSolar("interstitial"),
-                                    adError = adError
-                                )
-                            }
-                            isAdShowing = false
-                            OnResumeUtils.setEnableOnResume(true)
-                            handler.removeCallbacksAndMessages(null)
-                            holder.inter.value = null
-                            holder.inter.removeObservers((activity as LifecycleOwner))
-                            dismissAdDialog()
-                            callback.onInterFailed(adError.message)
-                        }
-
-                        override fun onAdShowedFullScreenContent() {
-                            handler.removeCallbacksAndMessages(null)
-                            isAdShowing = true
-                            callback.onInterShowed()
-                        }
+                holder.inter.value?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        isAdShowing = false
+                        OnResumeUtils.setEnableOnResume(true)
+                        holder.inter.removeObservers((activity as LifecycleOwner))
+                        holder.inter.value = null
+                        dismissAdDialog()
+                        callback.onInterClosed()
                     }
+
+                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                        logE("InterFailedToLoad" + adError.message)
+                        isAdShowing = false
+                        OnResumeUtils.setEnableOnResume(true)
+                        handler.removeCallbacksAndMessages(null)
+                        holder.inter.value = null
+                        holder.inter.removeObservers((activity as LifecycleOwner))
+                        dismissAdDialog()
+                        callback.onInterFailed(adError.message)
+                    }
+
+                    override fun onAdShowedFullScreenContent() {
+                        handler.removeCallbacksAndMessages(null)
+                        isAdShowing = true
+                        callback.onInterShowed()
+                    }
+                }
                 implementShowInterstitial(activity, holder.inter.value, callback)
             }, 400)
         }
     }
 
-    private fun implementShowInterstitial(
-        activity: AppCompatActivity,
-        interstitialAd: InterstitialAd?,
-        callback: InterCallback?
-    ) {
-        if (activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) && interstitialAd != null) {
+    private fun implementShowInterstitial(activity: AppCompatActivity, interstitialAd: InterstitialAd?, callback: InterCallback?) {
+        if (activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) && interstitialAd != null) {
             isAdShowing = true
             Handler(Looper.getMainLooper()).postDelayed({
                 callback?.onStartAction()
@@ -3249,11 +1185,7 @@ object AdmobUtils {
         }
     }
 
-    private fun performLoadAndShowInterstitial(
-        activity: Activity,
-        holder: InterHolder,
-        callback: InterCallback
-    ) {
+    private fun performLoadAndShowInterstitial(activity: Activity, holder: InterHolder, callback: InterCallback) {
         mInterstitialAd = null
         if (isPremium) {
             callback.onInterClosed()
@@ -3279,7 +1211,7 @@ object AdmobUtils {
             }
         }
 
-        if (holder.showLoading && holder.key != "ads_splash") {
+        if (holder.showLoading) {
             dialogLoading(activity)
         }
 
@@ -3287,12 +1219,7 @@ object AdmobUtils {
         tryLoadAndShowInter(activity, holder, callback)
     }
 
-    private fun tryLoadAndShowInter(
-        activity: Activity,
-        holder: InterHolder,
-        callback: InterCallback,
-        index: Int = 0
-    ) {
+    private fun tryLoadAndShowInter(activity: Activity, holder: InterHolder, callback: InterCallback, index: Int = 0) {
         val adIds = holder.interIds
         if (index >= adIds.size) { //* Failed
             holder.isInterLoading = false
@@ -3313,31 +1240,24 @@ object AdmobUtils {
                 log("Inter Loaded")
                 holder.isInterLoading = false
                 callback.onInterLoaded()
-                mInterstitialAd = interstitialAd
-                mInterstitialAd!!.onPaidEventListener =
-                    OnPaidEventListener { adValue: AdValue? ->
+                Handler(Looper.getMainLooper()).postDelayed({
+                    mInterstitialAd = interstitialAd
+                    mInterstitialAd?.onPaidEventListener = OnPaidEventListener { adValue: AdValue? ->
+                        logE( "onPaidEventListener: inter ")
+
                         adValue?.let {
                             SolarUtils.trackAdImpression(
                                 ad = adValue,
                                 adUnit = interstitialAd.adUnitId,
                                 format = "interstitial"
                             )
-                            val adapterInfo = interstitialAd.responseInfo.loadedAdapterResponseInfo
-                            AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Interstitial")
-
                             AdjustUtils.postRevenueAdjust(activity, it, interstitialAd.adUnitId)
 
                         }
                     }
-                mInterstitialAd!!.fullScreenContentCallback =
-                    object : FullScreenContentCallback() {
+                    mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                             logE("InterFailedToShowFullScreen" + adError.message)
-                            SolarUtils.trackAdShowFailure(
-                                adUnit = interstitialAd.adUnitId,
-                                format = formatNameForSolar("interstitial"),
-                                adError = adError
-                            )
                             callback.onInterFailed(adError.message)
                             isAdShowing = false
                             OnResumeUtils.setEnableOnResume(true)
@@ -3362,21 +1282,25 @@ object AdmobUtils {
                             super.onAdShowedFullScreenContent()
                             logE("onInterShowedFullScreenContent")
                             callback.onInterShowed()
-                            dismissAdDialog()
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                dismissAdDialog()
+                            }, 800)
                         }
                     }
-                if ((activity as AppCompatActivity).lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) && mInterstitialAd != null) {
-                    callback.onStartAction()
-                    mInterstitialAd!!.show(activity)
-                    isAdShowing = true
-                } else {
-                    logE("Interstitial can't show in background")
-                    mInterstitialAd = null
-                    dismissAdDialog()
-                    isAdShowing = false
-                    OnResumeUtils.setEnableOnResume(true)
-                    callback.onInterFailed("")
-                }
+                    if ((activity as AppCompatActivity).lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) && mInterstitialAd != null) {
+                        callback.onStartAction()
+                        mInterstitialAd!!.show(activity)
+                        dismissAdDialog()
+                        isAdShowing = true
+                    } else {
+                        logE("Interstitial can't show in background")
+                        mInterstitialAd = null
+                        dismissAdDialog()
+                        isAdShowing = false
+                        OnResumeUtils.setEnableOnResume(true)
+                        callback.onInterFailed("")
+                    }
+                }, 800)
             }
 
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
@@ -3391,7 +1315,6 @@ object AdmobUtils {
                     waterfallIndex = index
                 )
                 tryLoadAndShowInter(activity, holder, callback, index + 1)
-
             }
         })
     }
@@ -3413,7 +1336,7 @@ object AdmobUtils {
         }
     }
 
-    private fun nativeExtras(ad: NativeAd?) {
+    private fun aggregateErr(ad: NativeAd?) {
         try {
             if (!isEnableAds || isTesting) return
 
@@ -3430,14 +1353,8 @@ object AdmobUtils {
         }
     }
 
-    private fun performLoadAndShowBanner(
-        activity: AppCompatActivity,
-        holder: BannerHolder,
-        viewGroup: ViewGroup,
-        callback: BannerCallback
-    ) {
+    private fun performLoadAndShowBanner(activity: AppCompatActivity, holder: BannerHolder, viewGroup: ViewGroup, callback: BannerCallback) {
         if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) return
-
         if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
             viewGroup.gone()
             logE("Not EnableAds or No Internet")
@@ -3458,13 +1375,7 @@ object AdmobUtils {
         tryLoadAndShowBanner(activity, holder, viewGroup, callback)
     }
 
-    private fun tryLoadAndShowBanner(
-        activity: AppCompatActivity,
-        holder: BannerHolder,
-        viewGroup: ViewGroup,
-        callback: BannerCallback,
-        index: Int = 0
-    ) {
+    private fun tryLoadAndShowBanner(activity: AppCompatActivity, holder: BannerHolder, viewGroup: ViewGroup, callback: BannerCallback, index: Int = 0) {
         val adIds = holder.bannerIds
         if (index >= adIds.size) { //* Failed
             shimmerFrameLayout?.stopShimmer()
@@ -3476,51 +1387,45 @@ object AdmobUtils {
 
         val adId = adIds[index]
         val loadStart = nowMs()
-        val adSize = getBannerSize(activity)
         val mAdView = AdView(activity).apply {
             adUnitId = adId
+            val adSize = getBannerSize(activity)
             setAdSize(adSize)
+            adListener = object : AdListener() {
+                override fun onAdLoaded() {
+                    log("Banner Loaded")
+                    onPaidEventListener = OnPaidEventListener { adValue ->
+                        logE( "onPaidEventListener: banner ")
+                        SolarUtils.trackAdImpression(
+                            ad = adValue,
+                            adUnit = adUnitId,
+                            format = "banner"
+                        )
+                        AdjustUtils.postRevenueAdjust(activity, adValue, adUnitId)
 
-        }
+                    }
+                    shimmerFrameLayout?.stopShimmer()
+                    viewGroup.removeAllViews()
+                    viewGroup.addView(this@apply)
+                    viewGroup.addView(bannerDivider(activity, holder.anchor))
+                    callback.onBannerLoaded(adSize)
+                    postRefreshDelayed(activity, holder) {
+                        performLoadAndShowBanner(activity, holder, viewGroup, callback)
+                    }
+                }
 
-        mAdView.adListener = object : AdListener() {
-            override fun onAdLoaded() {
-                log("Banner Loaded")
-                val adapterInfo = mAdView.responseInfo?.loadedAdapterResponseInfo
-
-                mAdView.onPaidEventListener = OnPaidEventListener { adValue ->
-                    SolarUtils.trackAdImpression(
-                        ad = adValue,
+                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    logE("BannerFailed: ${loadAdError.message}")
+                    val latency = nowMs() - loadStart
+                    SolarUtils.trackAdLoadFailure(
                         adUnit = adId,
-                        format = "banner"
+                        format = formatNameForSolar("banner"),
+                        loadAdError = loadAdError,
+                        latencyMs = latency,
+                        waterfallIndex = index
                     )
-                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Banner")
-
-                    AdjustUtils.postRevenueAdjust(activity, adValue, adId)
-
+                    tryLoadAndShowBanner(activity, holder, viewGroup, callback, index + 1)
                 }
-                shimmerFrameLayout?.stopShimmer()
-                viewGroup.removeAllViews()
-                viewGroup.addView(mAdView)
-                viewGroup.addView(bannerDivider(activity, holder.anchor))
-                callback.onBannerLoaded(adSize)
-                postRefreshDelayed(activity, holder) {
-                    performLoadAndShowBanner(activity, holder, viewGroup, callback)
-                }
-            }
-
-            override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                logE("BannerFailed: ${loadAdError.message}")
-                mAdView.destroy()
-                val latency = nowMs() - loadStart
-                SolarUtils.trackAdLoadFailure(
-                    adUnit = adId,
-                    format = formatNameForSolar("banner"),
-                    loadAdError = loadAdError,
-                    latencyMs = latency,
-                    waterfallIndex = index
-                )
-                tryLoadAndShowBanner(activity, holder, viewGroup, callback, index + 1)
             }
         }
         adRequest?.let {
@@ -3529,12 +1434,7 @@ object AdmobUtils {
         }
     }
 
-    private fun performLoadAndShowBannerCollap(
-        activity: AppCompatActivity,
-        holder: BannerHolder,
-        viewGroup: ViewGroup,
-        callback: BannerCallback
-    ) {
+    private fun performLoadAndShowBannerCollap(activity: AppCompatActivity, holder: BannerHolder, viewGroup: ViewGroup, callback: BannerCallback) {
         if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) return
         if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
             viewGroup.gone()
@@ -3570,14 +1470,8 @@ object AdmobUtils {
         tryLoadBannerCollap(activity, holder, viewGroup, callback)
     }
 
-    private fun tryLoadBannerCollap(
-        activity: AppCompatActivity,
-        holder: BannerHolder,
-        viewGroup: ViewGroup,
-        callback: BannerCallback,
-        index: Int = 0
-    ) {
-        val adIds = holder.bannerCollapIds
+    private fun tryLoadBannerCollap(activity: AppCompatActivity, holder: BannerHolder, viewGroup: ViewGroup, callback: BannerCallback, index: Int = 0) {
+        val adIds = holder.bannerIds
         if (index >= adIds.size) { //* Failed
             shimmerFrameLayout?.stopShimmer()
             viewGroup.removeAllViews()
@@ -3598,13 +1492,12 @@ object AdmobUtils {
             override fun onAdLoaded() {
                 log("BannerCollap Loaded")
                 adView.onPaidEventListener = OnPaidEventListener { adValue ->
+                    logE( "onPaidEventListener: banner ")
                     SolarUtils.trackAdImpression(
                         ad = adValue,
                         adUnit = adView.adUnitId,
                         format = "banner"
                     )
-                    val adapterInfo = adView.responseInfo?.loadedAdapterResponseInfo
-                    AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Banner")
                     AdjustUtils.postRevenueAdjust(activity, adValue, adView.adUnitId)
 
                 }
@@ -3622,7 +1515,6 @@ object AdmobUtils {
 
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 logE("BannerCollapFailedToLoad: ${adError.message}")
-                adView.destroy()
                 val latency = nowMs() - loadStart
                 SolarUtils.trackAdLoadFailure(
                     adUnit = adId,
@@ -3671,35 +1563,18 @@ object AdmobUtils {
         val widthPixels = outMetrics.widthPixels.toFloat()
         val density = outMetrics.density
         val adWidth = (widthPixels / density).toInt()
-        val screenWidthDp = widthPixels / density
         // Step 3 - Get adaptive ad size and return for setting on the ad view.
-//        return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, adWidth)
-        return if (screenWidthDp >= 728) {
-            // Nếu là Tablet -> Dùng LEADERBOARD (728x90)
-            // Meta hỗ trợ rất tốt size này trên máy tính bảng
-            AdSize.LEADERBOARD
-        } else {
-            // Nếu là Điện thoại -> Dùng BANNER chuẩn (320x50)
-            // Đây là size duy nhất đảm bảo Meta fill rate cao nhất trên điện thoại
-            AdSize.BANNER
-        }
+        return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, adWidth)
     }
 
-    private fun postRefreshDelayed(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        doRefresh: () -> Unit
-    ) {
+    private fun postRefreshDelayed(activity: AppCompatActivity, holder: NativeHolder, doRefresh: () -> Unit) {
         val refreshRate = holder.refreshRate
         log("refresh rate: $refreshRate")
         refreshJob?.cancel()
         refreshJob = activity.lifecycleScope.launch(Dispatchers.Main) {
             if (refreshRate <= 0 || !activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
             delay(refreshRate * 1000L)
-            if (isNativeInterShowing(activity) || !activity.lifecycle.currentState.isAtLeast(
-                    Lifecycle.State.STARTED
-                )
-            ) return@launch
+            if (isNativeInterShowing(activity) || !activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@launch
             if (OnResumeUtils.isShowingAd) {
                 postRefreshDelayed(activity, holder, doRefresh)
                 return@launch
@@ -3710,11 +1585,7 @@ object AdmobUtils {
         }
     }
 
-    private fun performLoadAndShowReward(
-        activity: AppCompatActivity,
-        holder: RewardHolder,
-        callback: RewardCallback
-    ) {
+    private fun performLoadAndShowReward(activity: AppCompatActivity, holder: RewardHolder, callback: RewardCallback) {
         if (isPremium) {
             callback.onRewardEarned()
             callback.onRewardClosed()
@@ -3734,12 +1605,7 @@ object AdmobUtils {
         tryLoadReward(activity, holder, callback)
     }
 
-    private fun tryLoadReward(
-        activity: AppCompatActivity,
-        holder: RewardHolder,
-        callback: RewardCallback,
-        index: Int = 0
-    ) {
+    private fun tryLoadReward(activity: AppCompatActivity, holder: RewardHolder, callback: RewardCallback, index: Int = 0) {
         val adIds = holder.rewardIds
         if (index >= adIds.size) { //* Failed
             mRewardedAd = null
@@ -3751,8 +1617,8 @@ object AdmobUtils {
         }
 
         val adId = adIds[index]
-        log("Loading Reward: ${holder.key}/$adId")
         val loadStart = nowMs()
+        log("Loading Reward: ${holder.key}/$adId")
         RewardedAd.load(activity, adId, adRequest!!, object : RewardedAdLoadCallback() {
             override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                 logE("RewardFailed: ${loadAdError.message}")
@@ -3764,6 +1630,7 @@ object AdmobUtils {
                     latencyMs = latency,
                     waterfallIndex = index
                 )
+                isEarned = false
                 tryLoadReward(activity, holder, callback, index + 1)
             }
 
@@ -3771,13 +1638,12 @@ object AdmobUtils {
                 log("Reward Loaded")
                 mRewardedAd = rewardedAd
                 mRewardedAd?.setOnPaidEventListener {
+                    logE( "onPaidEventListener: reward ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = rewardedAd.adUnitId,
                         format = "rewarded"
                     )
-                    val adapterInfo = rewardedAd.responseInfo.loadedAdapterResponseInfo
-                    AppsFlyerUtils.postRevenueAppsFlyer(it, adId, adapterInfo, "Rewarded")
                     AdjustUtils.postRevenueAdjust(activity, it, rewardedAd.adUnitId)
 
                 }
@@ -3790,12 +1656,8 @@ object AdmobUtils {
 
                     override fun onAdFailedToShowFullScreenContent(adError: AdError) {
 //                        if (adError.code != 1) {
-                        SolarUtils.trackAdShowFailure(
-                            adUnit = rewardedAd.adUnitId,
-                            format = formatNameForSolar("rewarded"),
-                            adError = adError
-                        )
                         isAdShowing = false
+                        isEarned = false
                         callback.onRewardFailed(adError.message)
                         mRewardedAd = null
                         dismissAdDialog()
@@ -3812,10 +1674,11 @@ object AdmobUtils {
                         OnResumeUtils.setEnableOnResume(true)
                     }
                 }
-                if (activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                if (activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
                     OnResumeUtils.setEnableOnResume(false)
                     mRewardedAd?.show(activity) {
                         mRewardedAd = null
+                        isEarned = true
                         callback.onRewardEarned()
                     }
                     isAdShowing = true
@@ -3830,11 +1693,7 @@ object AdmobUtils {
         })
     }
 
-    private fun performLoadNative(
-        context: Context,
-        holder: NativeHolder,
-        callback: NativeCallback
-    ) {
+    private fun performLoadNative(context: Context, holder: NativeHolder, callback: NativeCallback) {
         if (!isEnableAds || !isNetworkConnected(context) || isPremium) {
             logE("Not EnableAds or No Internet")
             callback.onNativeFailed("")
@@ -3851,19 +1710,14 @@ object AdmobUtils {
         }
         holder.isNativeLoading = true
 //        val videoOptions = VideoOptions.Builder().setStartMuted(false).build()
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             tryLoadNative(context, holder, callback)
         }
     }
 
-    private fun tryLoadNative(
-        context: Context,
-        holder: NativeHolder,
-        callback: NativeCallback,
-        index: Int = 0
-    ) {
+    private fun tryLoadNative(context: Context, holder: NativeHolder, callback: NativeCallback, index: Int = 0) {
         val adIds = holder.nativeIds
-        if (index >= adIds.size) {
+        if (index >= adIds.size) { //* Failed
             Handler(Looper.getMainLooper()).post {
                 holder.isNativeLoading = false
                 holder.nativeAd.value = null
@@ -3874,28 +1728,23 @@ object AdmobUtils {
 
         val adId = adIds[index]
         val loadStart = nowMs()
-        val adOptions = NativeAdOptions.Builder()
-            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
-            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
-            .build()
         val adLoader = AdLoader.Builder(context, adId).forNativeAd { nativeAd ->
             log("Native Loaded")
             holder.isNativeLoading = false
             holder.nativeAd.value = nativeAd
             nativeAd.setOnPaidEventListener { adValue: AdValue? ->
                 adValue?.let {
+                    logE( "onPaidEventListener: native ")
                     SolarUtils.trackAdImpression(
-                        ad = adValue,
+                        ad = it,
                         adUnit = adId,
                         format = "native"
                     )
-                    val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
-                    AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
                     AdjustUtils.postRevenueAdjust(context, adValue, adId)
 
                 }
             }
-            nativeExtras(nativeAd)
+            aggregateErr(nativeAd)
             holder.currentAdId = adId
             callback.onNativeReady(nativeAd)
         }.withAdListener(object : AdListener() {
@@ -3909,32 +1758,24 @@ object AdmobUtils {
                     latencyMs = latency,
                     waterfallIndex = index
                 )
-                softDelay {
-                    tryLoadNative(context, holder, callback, index + 1)
-                }
+                tryLoadNative(context, holder, callback, index + 1)
             }
 
             override fun onAdClicked() {
                 super.onAdClicked()
                 callback.onNativeClicked()
             }
-        }).withNativeAdOptions(adOptions).build()
+        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
         adRequest?.let {
             log("Loading Native ${holder.key}/$adId")
             adLoader.loadAd(it)
         }
     }
 
-    private fun performShowNative(
-        activity: Activity,
-        viewGroup: ViewGroup,
-        holder: NativeHolder,
-        callback: NativeCallbackSimple
-    ) {
+    private fun performShowNative(activity: Activity, viewGroup: ViewGroup, holder: NativeHolder, callback: NativeCallbackSimple) {
         if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
             logE("Not EnableAds or No Internet")
             viewGroup.gone()
-            callback.onNativeFailed("")
             return
         }
         shimmerFrameLayout?.stopShimmer()
@@ -3943,6 +1784,16 @@ object AdmobUtils {
 
         if (!holder.isNativeLoading) {
             if (holder.nativeAd.value != null) {
+                holder.nativeAd.value?.setOnPaidEventListener {
+                    logE( "onPaidEventListener: native ")
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = holder.currentAdId,
+                        format = "native"
+                    )
+                    AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
+
+                }
                 val adView = activity.layoutInflater.inflate(layoutId, null) as NativeAdView
                 populateNativeAdView(holder.nativeAd.value!!, adView)
                 holder.nativeAd.removeObservers((activity as LifecycleOwner))
@@ -3952,6 +1803,7 @@ object AdmobUtils {
                     viewGroup.addView(adView)
                     log("showing Native: ${holder.key}/${holder.currentAdId}")
                 }
+
                 callback.onNativeLoaded()
             } else {
                 viewGroup.gone()
@@ -3972,14 +1824,13 @@ object AdmobUtils {
             }
             holder.nativeAd.observe((activity as LifecycleOwner)) { nativeAd ->
                 if (nativeAd != null) {
-                    val adapterInfo = nativeAd?.responseInfo?.loadedAdapterResponseInfo
                     nativeAd.setOnPaidEventListener {
+                        logE( "onPaidEventListener: native ")
                         SolarUtils.trackAdImpression(
                             ad = it,
                             adUnit = holder.currentAdId,
                             format = "native"
                         )
-                        AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
                         AdjustUtils.postRevenueAdjust(activity, it, holder.currentAdId)
 
                     }
@@ -4007,20 +1858,11 @@ object AdmobUtils {
         }
     }
 
-    private fun performLoadAndShowNative(
-        context: AppCompatActivity,
-        viewGroup: ViewGroup,
-        holder: NativeHolder,
-        callback: NativeCallback
-    ) {
-        if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) {
-            callback.onNativeFailed("")
-            return
-        }
+    private fun performLoadAndShowNative(context: AppCompatActivity, viewGroup: ViewGroup, holder: NativeHolder, callback: NativeCallback) {
+        if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) return
         if (!isEnableAds || !isNetworkConnected(context) || isPremium) {
             logE("Not EnableAds or No Internet")
             viewGroup.gone()
-            callback.onNativeFailed("")
             return
         }
 
@@ -4031,8 +1873,7 @@ object AdmobUtils {
             viewGroup.addView(tagView, 0)
         }
 
-        val shimmerFrameLayout =
-            tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
+        val shimmerFrameLayout = tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
         shimmerFrameLayout.startShimmer()
 
         holder.loadTimestamp = System.currentTimeMillis()
@@ -4066,13 +1907,7 @@ object AdmobUtils {
         else -> R.layout.layout_native_loading_medium
     }
 
-    private fun tryLoadAndShowNative(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback,
-        index: Int = 0
-    ) {
+    private fun tryLoadAndShowNative(activity: AppCompatActivity, holder: NativeHolder, viewGroup: ViewGroup, callback: NativeCallback, index: Int = 0) {
         val adIds = holder.nativeIds
         if (index >= adIds.size) { //* Failed
             runCatching {
@@ -4085,12 +1920,6 @@ object AdmobUtils {
 
         val adId = adIds[index]
         val loadStart = nowMs()
-
-        val adOptions = NativeAdOptions.Builder()
-            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
-            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
-            .build()
-
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("Native Loaded")
             callback.onNativeReady(nativeAd)
@@ -4099,18 +1928,17 @@ object AdmobUtils {
             val adView = LayoutInflater.from(activity).inflate(layoutId, null) as NativeAdView
             populateNativeAdView(nativeAd, adView)
             nativeAd.setOnPaidEventListener { adValue: AdValue ->
+                logE( "onPaidEventListener: native ")
                 SolarUtils.trackAdImpression(
                     ad = adValue,
                     adUnit = adId,
                     format = "native"
                 )
-                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
-                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
 
             }
 
-            nativeExtras(nativeAd)
+            aggregateErr(nativeAd)
             runCatching {
                 viewGroup.removeAllViews()
                 viewGroup.addView(adView)
@@ -4129,362 +1957,18 @@ object AdmobUtils {
                     latencyMs = latency,
                     waterfallIndex = index
                 )
-                softDelay {
-                    tryLoadAndShowNative(activity, holder, viewGroup, callback, index + 1)
-                }
+                tryLoadAndShowNative(activity, holder, viewGroup, callback, index + 1)
             }
 
-        }).withNativeAdOptions(adOptions).build()
+        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
 
         adRequest?.let {
             log("Loading Native ${holder.key}/$adId")
             adLoader.loadAd(it)
-        } ?: run {
-            logE("adRequest is NULL")
-            callback.onNativeFailed("")
-        }
+        } ?: run { logE("adRequest is NULL") }
     }
 
-    private fun performLoadAndShowNativeResize(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback
-    ) {
-        if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) {
-            callback.onNativeFailed("")
-            return
-        }
-        val tag = "native_collap_view"
-        runCatching {
-            val decorView = activity.window.decorView as ViewGroup
-            decorView.findViewWithTag<View>(tag)?.let { decorView.removeView(it) }
-        }
-
-        if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
-            viewGroup.gone()
-            logE("Not EnableAds or No Internet")
-            callback.onNativeFailed("")
-            return
-        }
-        if (isNativeInterShowing(activity)) {
-            viewGroup.gone()
-            logE("NativeInter is showing")
-            callback.onNativeFailed("")
-            return
-        }
-//        val videoOptions = VideoOptions.Builder().setStartMuted(false).setCustomControlsRequested(false).build()
-        val tagView =
-            activity.layoutInflater.inflate(R.layout.layout_native_loading_medium, null, false)
-        runCatching {
-            viewGroup.removeAllViews()
-            viewGroup.addView(tagView, 0)
-        }
-
-        viewGroup.visible()
-        val shimmerFrameLayout =
-            tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
-        shimmerFrameLayout.startShimmer()
-
-        holder.loadTimestamp = System.currentTimeMillis()
-        tryLoadAndShowNativeResize(activity, holder, viewGroup, callback)
-    }
-
-    private fun tryLoadAndShowNativeResize(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback,
-        index: Int = 0
-    ) {
-        val adIds = holder.nativeIds
-        if (index >= adIds.size) { //* Failed
-            runCatching {
-                viewGroup.removeAllViews()
-                viewGroup.gone()
-            }
-            callback.onNativeFailed("")
-            return
-        }
-
-        val adId = adIds[index]
-        val loadStart = nowMs()
-        val tag = "native_collap_view"
-        val adOptions = NativeAdOptions.Builder()
-            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
-            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
-            .build()
-        val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
-            log("NativeCollap Loaded")
-            callback.onNativeReady(nativeAd)
-            val adViewCollap = activity.layoutInflater.inflate(
-                R.layout.native_template_resize,
-                null
-            ) as NativeAdView
-            adViewCollap.tag = tag
-            nativeAd.setOnPaidEventListener { adValue: AdValue ->
-                SolarUtils.trackAdImpression(
-                    ad = adValue,
-                    adUnit = adId,
-                    format = "native"
-                )
-                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
-                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
-                AdjustUtils.postRevenueAdjust(activity, adValue, adId)
-
-            }
-            nativeExtras(nativeAd)
-            populateNativeAdViewCollap(nativeAd, adViewCollap, holder.anchor) {
-                runCatching { //* On icon collapse clicked
-                    val configList = holder.collapConfig ?: listOf()
-                    val clickCount = activity.prefs().getInt("collap_click_count", 0) + 1
-                    val currentStepIndex = activity.prefs().getInt("collap_step_index", 0)
-
-                    log("NativeCollap Clicked: collapConfig=$configList || index=$currentStepIndex || clickCount=$clickCount")
-                    if (currentStepIndex >= configList.size) {
-                        logE("No config => Skip counting")
-                        viewGroup.removeView(adViewCollap)
-                        return@runCatching
-                    }
-
-                    activity.prefs().edit { putInt("collap_click_count", clickCount) }
-                    if (clickCount >= configList[currentStepIndex]) {
-                        activity.prefs().edit {
-                            putInt("collap_step_index", currentStepIndex + 1)
-                            putInt("collap_click_count", 0)
-                        }
-                        adViewCollap.findViewById<View>(R.id.ad_call_to_action).performClick()
-                    } else {
-                        viewGroup.removeView(adViewCollap)
-                    }
-                }
-            }
-            runCatching {
-                viewGroup.removeAllViews()
-                val layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-                if (!isNativeInterShowing(activity)) {
-                    val layoutId = nativeTemplateId(holder)
-                    val adViewSmall = activity.layoutInflater.inflate(
-                        layoutId,
-                        null
-                    ) as NativeAdView
-                    populateNativeAdView(nativeAd, adViewSmall)
-                    viewGroup.addView(adViewSmall)
-                    viewGroup.addView(adViewCollap, layoutParams)
-                    postRefreshDelayed(activity, holder) {
-                        performLoadAndShowNativeResize(activity, holder, viewGroup, callback)
-                    }
-
-                }
-            }.onFailure {
-                logE(it.message.toString())
-            }
-
-        }.withAdListener(object : AdListener() {
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                logE("NativeCollapFailedToLoad ${adError.message} - ${adError.cause}")
-                softDelay {
-                    tryLoadAndShowNativeResize(activity, holder, viewGroup, callback, index + 1)
-                }
-                val latency = nowMs() - loadStart
-                SolarUtils.trackAdLoadFailure(
-                    adUnit = adId,
-                    format = formatNameForSolar("native"),
-                    loadAdError = adError,
-                    latencyMs = latency,
-                    waterfallIndex = index
-                )
-            }
-
-            override fun onAdClicked() {
-                super.onAdClicked()
-                activity.prefs().edit { putInt("collap_click_count", 0) }
-            }
-        }).withNativeAdOptions(adOptions).build()
-        adRequest?.let {
-            log("Loading Native ${holder.key}/$adId")
-            adLoader.loadAd(it)
-        } ?: run {
-            logE("adRequest is NULL")
-            callback.onNativeFailed("")
-        }
-    }
-
-    private fun performLoadAndShowNativeResizeSmall(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback
-    ) {
-        if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) {
-            callback.onNativeFailed("")
-            return
-        }
-        val tag = "native_collap_view"
-        runCatching {
-            val decorView = activity.window.decorView as ViewGroup
-            decorView.findViewWithTag<View>(tag)?.let { decorView.removeView(it) }
-        }
-
-        if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
-            viewGroup.gone()
-            logE("Not EnableAds or No Internet")
-            callback.onNativeFailed("")
-            return
-        }
-        if (isNativeInterShowing(activity)) {
-            viewGroup.gone()
-            logE("NativeInter is showing")
-            callback.onNativeFailed("")
-            return
-        }
-//        val videoOptions = VideoOptions.Builder().setStartMuted(false).setCustomControlsRequested(false).build()
-        val tagView =
-            activity.layoutInflater.inflate(R.layout.layout_native_loading_medium, null, false)
-        runCatching {
-            viewGroup.removeAllViews()
-            viewGroup.addView(tagView, 0)
-        }
-
-        viewGroup.visible()
-        val shimmerFrameLayout =
-            tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
-        shimmerFrameLayout.startShimmer()
-
-//        holder.loadTimestamp = System.currentTimeMillis()
-        tryLoadAndShowNativeResizeSmall(activity, holder, viewGroup, callback)
-    }
-
-    private fun tryLoadAndShowNativeResizeSmall(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback,
-        index: Int = 0
-    ) {
-        val adIds = holder.nativeIds
-        if (index >= adIds.size) { //* Failed
-            runCatching {
-                viewGroup.removeAllViews()
-                viewGroup.gone()
-            }
-            callback.onNativeFailed("")
-            return
-        }
-
-        val adId = adIds[index]
-        val loadStart = nowMs()
-        val tag = "native_collap_view"
-        val adOptions = NativeAdOptions.Builder()
-            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
-            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
-            .build()
-        val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
-            log("NativeCollap Loaded")
-            callback.onNativeReady(nativeAd)
-            val adViewCollap = activity.layoutInflater.inflate(
-                R.layout.native_template_resize,
-                null
-            ) as NativeAdView
-            adViewCollap.tag = tag
-            nativeAd.setOnPaidEventListener { adValue: AdValue ->
-                SolarUtils.trackAdImpression(
-                    ad = adValue,
-                    adUnit = adId,
-                    format = "native"
-                )
-                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
-                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
-                AdjustUtils.postRevenueAdjust(activity, adValue, adId)
-
-            }
-            nativeExtras(nativeAd)
-            populateNativeAdViewCollap(nativeAd, adViewCollap, holder.anchor) {
-                runCatching { //* On icon collapse clicked
-                    val configList = holder.collapConfig ?: listOf()
-                    val clickCount = activity.prefs().getInt("collap_click_count", 0) + 1
-                    val currentStepIndex = activity.prefs().getInt("collap_step_index", 0)
-
-                    log("NativeCollap Clicked: collapConfig=$configList || index=$currentStepIndex || clickCount=$clickCount")
-                    if (currentStepIndex >= configList.size) {
-                        logE("No config => Skip counting")
-                        performLoadAndShowNative(activity, viewGroup, holder, callback)
-                        viewGroup.removeView(adViewCollap)
-                        return@runCatching
-                    }
-
-                    activity.prefs().edit { putInt("collap_click_count", clickCount) }
-                    if (clickCount >= configList[currentStepIndex]) {
-                        activity.prefs().edit {
-                            putInt("collap_step_index", currentStepIndex + 1)
-                            putInt("collap_click_count", 0)
-                        }
-                        adViewCollap.findViewById<View>(R.id.ad_call_to_action).performClick()
-                    } else {
-                        viewGroup.removeView(adViewCollap)
-                    }
-                }
-            }
-            runCatching {
-                viewGroup.removeAllViews()
-                val layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-                if (!isNativeInterShowing(activity)) {
-                    if (holder.anchor == "top") {
-                        viewGroup.addView(adViewCollap, 0, layoutParams)
-                    } else {
-                        viewGroup.addView(adViewCollap, layoutParams)
-                    }
-                    postRefreshDelayed(activity, holder) {
-                        performLoadAndShowNativeResizeSmall(activity, holder, viewGroup, callback)
-                    }
-
-                }
-            }.onFailure {
-                logE(it.message.toString())
-            }
-
-        }.withAdListener(object : AdListener() {
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                logE("NativeCollapFailedToLoad ${adError.message} - ${adError.cause}")
-                softDelay {
-                    tryLoadAndShowNativeResizeSmall(
-                        activity,
-                        holder,
-                        viewGroup,
-                        callback,
-                        index + 1
-                    )
-                }
-                val latency = nowMs() - loadStart
-                SolarUtils.trackAdLoadFailure(
-                    adUnit = adId,
-                    format = formatNameForSolar("native"),
-                    loadAdError = adError,
-                    latencyMs = latency,
-                    waterfallIndex = index
-                )
-            }
-
-            override fun onAdClicked() {
-                super.onAdClicked()
-                activity.prefs().edit { putInt("collap_click_count", 0) }
-            }
-        }).withNativeAdOptions(adOptions).build()
-        adRequest?.let {
-            log("Loading Native ${holder.key}/$adId")
-            adLoader.loadAd(it)
-        } ?: run {
-            logE("adRequest is NULL")
-            callback.onNativeFailed("")
-        }
-    }
-
-    private fun performLoadAndShowNativeCollap(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback
-    ) {
+    private fun performLoadAndShowNativeCollap(activity: AppCompatActivity, holder: NativeHolder, viewGroup: ViewGroup, callback: NativeCallback) {
         if (System.currentTimeMillis() - holder.loadTimestamp < THROTTLE_MILLIS) return
         val tag = "native_collap_view"
         runCatching {
@@ -4512,21 +1996,14 @@ object AdmobUtils {
         }
 
         viewGroup.visible()
-        val shimmerFrameLayout =
-            tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
+        val shimmerFrameLayout = tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
         shimmerFrameLayout.startShimmer()
 
         holder.loadTimestamp = System.currentTimeMillis()
         tryLoadAndShowNativeCollap(activity, holder, viewGroup, callback)
     }
 
-    private fun tryLoadAndShowNativeCollap(
-        activity: AppCompatActivity,
-        holder: NativeHolder,
-        viewGroup: ViewGroup,
-        callback: NativeCallback,
-        index: Int = 0
-    ) {
+    private fun tryLoadAndShowNativeCollap(activity: AppCompatActivity, holder: NativeHolder, viewGroup: ViewGroup, callback: NativeCallback, index: Int = 0) {
         val adIds = holder.nativeIds
         if (index >= adIds.size) { //* Failed
             runCatching {
@@ -4541,30 +2018,22 @@ object AdmobUtils {
         val loadStart = nowMs()
         val decorView = activity.window.decorView as ViewGroup
         val tag = "native_collap_view"
-        val adOptions = NativeAdOptions.Builder()
-            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
-            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
-            .build()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("NativeCollap Loaded")
             callback.onNativeReady(nativeAd)
-            val adViewCollap = activity.layoutInflater.inflate(
-                R.layout.native_template_collap,
-                null
-            ) as NativeAdView
+            val adViewCollap = activity.layoutInflater.inflate(R.layout.native_template_collap, null) as NativeAdView
             adViewCollap.tag = tag
             nativeAd.setOnPaidEventListener { adValue: AdValue ->
+                logE( "onPaidEventListener: native ")
                 SolarUtils.trackAdImpression(
                     ad = adValue,
                     adUnit = adId,
                     format = "native"
                 )
-                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
-                AppsFlyerUtils.postRevenueAppsFlyer(adValue, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, adValue, adId)
 
             }
-            nativeExtras(nativeAd)
+            aggregateErr(nativeAd)
             populateNativeAdViewCollap(nativeAd, adViewCollap, holder.anchor) {
                 runCatching { //* On icon collapse clicked
                     val configList = holder.collapConfig ?: listOf()
@@ -4597,10 +2066,7 @@ object AdmobUtils {
                 }
                 if (!isNativeInterShowing(activity)) {
                     decorView.addView(adViewCollap, layoutParams)
-                    val adViewSmall = activity.layoutInflater.inflate(
-                        R.layout.native_template_tiny1,
-                        null
-                    ) as NativeAdView
+                    val adViewSmall = activity.layoutInflater.inflate(R.layout.native_template_tiny1, null) as NativeAdView
                     populateNativeAdView(nativeAd, adViewSmall)
                     viewGroup.addView(adViewSmall)
                     postRefreshDelayed(activity, holder) {
@@ -4614,9 +2080,6 @@ object AdmobUtils {
         }.withAdListener(object : AdListener() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 logE("NativeCollapFailedToLoad ${adError.message} - ${adError.cause}")
-                softDelay {
-                    tryLoadAndShowNativeCollap(activity, holder, viewGroup, callback, index + 1)
-                }
                 val latency = nowMs() - loadStart
                 SolarUtils.trackAdLoadFailure(
                     adUnit = adId,
@@ -4625,33 +2088,28 @@ object AdmobUtils {
                     latencyMs = latency,
                     waterfallIndex = index
                 )
+                tryLoadAndShowNativeCollap(activity, holder, viewGroup, callback, index + 1)
             }
 
             override fun onAdClicked() {
                 super.onAdClicked()
                 activity.prefs().edit { putInt("collap_click_count", 0) }
             }
-        }).withNativeAdOptions(adOptions).build()
+        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
         adRequest?.let {
             log("Loading Native ${holder.key}/$adId")
             adLoader.loadAd(it)
         }
     }
 
-    private fun performLoadAndShowNativeFull(
-        activity: Activity,
-        viewGroup: ViewGroup,
-        holder: NativeHolder,
-        callback: NativeCallbackSimple
-    ) {
+    private fun performLoadAndShowNativeFull(activity: Activity, viewGroup: ViewGroup, holder: NativeHolder, callback: NativeCallbackSimple) {
         if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
             viewGroup.gone()
             logE("Not EnableAds or No Internet")
             callback.onNativeFailed("")
             return
         }
-        val tagView =
-            activity.layoutInflater.inflate(R.layout.layout_native_loading_full, null, false)
+        val tagView = activity.layoutInflater.inflate(R.layout.layout_native_loading_full, null, false)
         runCatching {
             viewGroup.removeAllViews()
             viewGroup.addView(tagView, 0)
@@ -4660,8 +2118,7 @@ object AdmobUtils {
         OnResumeUtils.setEnableOnResume(false)
         viewGroup.visible()
         viewGroup.isClickable = true
-        val shimmerFrameLayout =
-            tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
+        val shimmerFrameLayout = tagView.findViewById<ShimmerFrameLayout>(R.id.shimmer_view_container)
         shimmerFrameLayout.startShimmer()
 
         tryLoadAndShowNativeFull(activity, holder, viewGroup, callback)
@@ -4685,23 +2142,17 @@ object AdmobUtils {
 
         val adId = adIds[index]
         val loadStart = nowMs()
-        val adOptions = NativeAdOptions.Builder()
-            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
-            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
-            .build()
         val adLoader = AdLoader.Builder(activity, adId).forNativeAd { nativeAd ->
             log("NativeFull Loaded")
-            val adView =
-                activity.layoutInflater.inflate(R.layout.native_template_full, null) as NativeAdView
-            nativeExtras(nativeAd)
+            val adView = activity.layoutInflater.inflate(R.layout.native_template_full, null) as NativeAdView
+            aggregateErr(nativeAd)
             nativeAd.setOnPaidEventListener {
+                logE( "onPaidEventListener: native ")
                 SolarUtils.trackAdImpression(
                     ad = it,
                     adUnit = adId,
                     format = "native"
                 )
-                val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
-                AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
                 AdjustUtils.postRevenueAdjust(activity, it, adId)
 
             }
@@ -4724,18 +2175,14 @@ object AdmobUtils {
                 )
                 tryLoadAndShowNativeFull(activity, holder, viewGroup, callback, index + 1)
             }
-        }).withNativeAdOptions(adOptions).build()
+        }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
         adRequest?.let {
             log("Loading NativeFull ${holder.key}/$adId")
             adLoader.loadAd(it)
         } ?: run { logE("adRequest is NULL") }
     }
 
-    private fun performLoadNativeFull(
-        context: Context,
-        holder: NativeHolder,
-        callback: NativeCallback
-    ) {
+    private fun performLoadNativeFull(context: Context, holder: NativeHolder, callback: NativeCallback) {
         if (!isEnableAds || !isNetworkConnected(context) || isPremium) {
             logE("Not EnableAds or No Internet")
             callback.onNativeFailed("")
@@ -4749,18 +2196,12 @@ object AdmobUtils {
             logE("Native not null")
 //            return
         }
-        CoroutineScope(Dispatchers.IO).launch {
-            delay(delayMs)
+        CoroutineScope(Dispatchers.Main).launch {
             tryLoadNativeFull(context, holder, callback)
         }
     }
 
-    private fun tryLoadNativeFull(
-        context: Context,
-        holder: NativeHolder,
-        callback: NativeCallback,
-        index: Int = 0
-    ) {
+    private fun tryLoadNativeFull(context: Context, holder: NativeHolder, callback: NativeCallback, index: Int = 0) {
         val adIds = holder.nativeIds
         if (index >= adIds.size) { //* Failed
             Handler(Looper.getMainLooper()).post {
@@ -4774,29 +2215,24 @@ object AdmobUtils {
         val adId = adIds[index]
         val loadStart = nowMs()
         holder.isNativeLoading = true
-        val adOptions = NativeAdOptions.Builder()
-            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_ANY)
-            .setVideoOptions(VideoOptions.Builder().setStartMuted(true).build())
-            .build()
         val adLoader = AdLoader.Builder(context, adId)
-            .withNativeAdOptions(adOptions)
+            .withNativeAdOptions(NativeAdOptions.Builder().build())
             .forNativeAd { nativeAd ->
                 log("NativeFull Loaded")
                 holder.isNativeLoading = false
                 holder.nativeAd.value = nativeAd
                 holder.currentAdId = adId
                 nativeAd.setOnPaidEventListener {
+                    logE( "onPaidEventListener: native ")
                     SolarUtils.trackAdImpression(
                         ad = it,
                         adUnit = adId,
                         format = "native"
                     )
-                    val adapterInfo = nativeAd.responseInfo?.loadedAdapterResponseInfo
-                    AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
                     AdjustUtils.postRevenueAdjust(context, it, adId)
 
                 }
-                nativeExtras(nativeAd)
+                aggregateErr(nativeAd)
                 callback.onNativeReady(nativeAd)
             }.withAdListener(object : AdListener() {
                 override fun onAdClicked() {
@@ -4814,9 +2250,7 @@ object AdmobUtils {
                         latencyMs = latency,
                         waterfallIndex = index
                     )
-                    softDelay {
-                        tryLoadNativeFull(context, holder, callback, index + 1)
-                    }
+                    tryLoadNativeFull(context, holder, callback, index + 1)
                 }
             })
         adRequest?.let {
@@ -4825,12 +2259,7 @@ object AdmobUtils {
         }
     }
 
-    private fun performShowNativeFull(
-        context: Context,
-        viewGroup: ViewGroup,
-        holder: NativeHolder,
-        callback: NativeCallbackSimple
-    ) {
+    private fun performShowNativeFull(context: Context, viewGroup: ViewGroup, holder: NativeHolder, callback: NativeCallbackSimple) {
         if (!isEnableAds || !isNetworkConnected(context) || isPremium) {
             logE("Not EnableAds or No Internet")
             viewGroup.gone()
@@ -4842,6 +2271,17 @@ object AdmobUtils {
         val inflater = LayoutInflater.from(context)
         if (!holder.isNativeLoading) {
             if (holder.nativeAd.value != null) {
+                holder.nativeAd.value?.setOnPaidEventListener {
+                    logE( "onPaidEventListener: native ")
+
+                    SolarUtils.trackAdImpression(
+                        ad = it,
+                        adUnit = holder.currentAdId,
+                        format = "native"
+                    )
+                    AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
+
+                }
                 val adView = inflater.inflate(layout, null) as NativeAdView
                 populateNativeAdViewFull(holder.nativeAd.value!!, adView)
                 shimmerFrameLayout?.stopShimmer()
@@ -4862,22 +2302,19 @@ object AdmobUtils {
         } else {
             val tagView = inflater.inflate(R.layout.layout_native_loading_full, null, false)
             viewGroup.addView(tagView, 0)
-            if (shimmerFrameLayout == null) shimmerFrameLayout =
-                tagView.findViewById(R.id.shimmer_view_container)
+            if (shimmerFrameLayout == null) shimmerFrameLayout = tagView.findViewById(R.id.shimmer_view_container)
             shimmerFrameLayout?.startShimmer()
 
             holder.nativeAd.observe((context as LifecycleOwner)) { nativeAd: NativeAd? ->
                 if (nativeAd != null) {
-                    val adapterInfo = nativeAd?.responseInfo?.loadedAdapterResponseInfo
-
                     nativeAd.setOnPaidEventListener {
+                        logE( "onPaidEventListener: native ")
+
                         SolarUtils.trackAdImpression(
                             ad = it,
                             adUnit = holder.currentAdId,
                             format = "native"
                         )
-                        AppsFlyerUtils.postRevenueAppsFlyer(it, holder.currentAdId, adapterInfo, "Native")
-
                         AdjustUtils.postRevenueAdjust(context, it, adUnit = holder.currentAdId)
 
                     }
@@ -4912,10 +2349,8 @@ object AdmobUtils {
         if (isTesting || Helper.enableReleaseLog) Log.e("AdmobUtils", msg)
     }
 
-    private fun Context.adOrg() =
-        prefs().getBoolean("is_are", true) && !isTesting && Helper.settings()
-            ?.get("ads_enable")?.asString == "2"
-//    private fun Context.adOrg() = prefs().getBoolean("is_are", true) && Helper.settings()?.get("ads_enable")?.asString == "2"
+    private fun Context.adOrg() = prefs().getBoolean("ads_ref_event", true) && !isTesting && Helper.settings()?.get("ads_enable")?.asString == "2"
+//    private fun Context.adOrg() = prefs().getBoolean("ads_ref_event", true) && Helper.settings()?.get("ads_enable")?.asString == "2"
 
     abstract class InterCallback {
         open fun onStartAction() {}

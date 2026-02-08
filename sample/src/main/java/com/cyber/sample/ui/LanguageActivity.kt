@@ -9,7 +9,7 @@ import com.cyber.sample.RemoteConfig
 
 class LanguageActivity(
     override var nativeLanguage: NativeMultiHolder = RemoteConfig.NATIVE_LANGUAGE,
-    override var nativeSmall: NativeHolder = RemoteConfig.NATIVE_LANGUAGE_SMALL,
+    override var nativeSmall: NativeHolder = RemoteConfig.NATIVE_SMALL_LANGUAGE,
 ) : BaseLanguageActivity() {
     override var nativeFull: NativeHolder =RemoteConfig.NATIVE_INTRO_FULL
     override var nativeIntro: NativeMultiHolder =RemoteConfig.NATIVE_INTRO
