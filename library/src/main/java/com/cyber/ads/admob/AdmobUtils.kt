@@ -533,6 +533,7 @@ object AdmobUtils {
     fun loadNativeFull(context: Context, holder: NativeHolder, callback: NativeCallback) {
         Helper.parseNative(holder)
         if (holder.enable == "0" || context.adOrg()) {
+            holder.isNativeLoading = false
             callback.onNativeFailed("Not show native")
         } else {
             performLoadNativeFull(context, holder, callback)
@@ -597,9 +598,10 @@ object AdmobUtils {
     @JvmStatic
     fun showNativeLanguage(activity: Activity, holder: NativeMultiHolder, viewGroup: ViewGroup, index: Int, callback: NativeCallbackSimple) {
         log("holder language: $holder")
-        if (holder.enable == "0" || activity.adOrg()) {
+        if (holder.enable == "0" || activity.adOrg() || !isEnableAds) {
             logE("Native language disabled")
             viewGroup.gone()
+            callback.onNativeFailed("")
         } else {
             val nativeHolder = holder.holders.getOrNull(index)
             if (nativeHolder == null) {
@@ -617,6 +619,8 @@ object AdmobUtils {
         Helper.parseNativeMulti(holder)
         val obj = Helper.jsonObject()?.get(holder.key)?.asJsonObject ?: return
         if (holder.enable == "0" || context.adOrg()) {
+            holder.isNativeLoading = false
+            callback.onNativeFailed("")
             logE("NativeIntro disabled")
         } else {
             val nativeIntro1 = NativeHolder("${holder.key}1")

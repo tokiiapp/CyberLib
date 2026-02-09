@@ -2,6 +2,7 @@ package com.cyber.ads.onboading
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
@@ -159,9 +160,11 @@ abstract class BaseLanguageActivity : AppCompatActivity() {
         adapter = LanguageAdapter { position ->
             if (position < 0) return@LanguageAdapter
             if (lang.isBlank()) {
+
                 binding.progressBar.visible()
                 showNativeLanguage(1)
             } else {
+
                 checkAndShowNext()
             }
             lang = languages[position].langCode
