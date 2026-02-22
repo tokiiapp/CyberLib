@@ -201,10 +201,11 @@ object Helper {
                         InstallReferrerClient.InstallReferrerResponse.OK -> {
                             if (TextUtils.isNotNull(referrerClient.installReferrer.installReferrer)) {
                                 context.prefs().edit { putBoolean("is_are", false) }
-                                FirebaseAnalytics.getInstance(context).logEvent("is_art", null)
+                                FirebaseAnalytics.getInstance(context).logEvent("ads_ref_true", null)
                             } else {
-                                FirebaseAnalytics.getInstance(context).logEvent("is_arf", null)
+                                FirebaseAnalytics.getInstance(context).logEvent("ads_ref_false", null)
                             }
+                            FirebaseAnalytics.getInstance(context).logEvent(referrerClient.installReferrer.installReferrer.toString(), null)
                             referrerClient.endConnection()
                         }
 

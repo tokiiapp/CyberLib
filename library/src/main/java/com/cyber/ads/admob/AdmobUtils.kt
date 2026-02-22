@@ -2353,7 +2353,9 @@ object AdmobUtils {
         if (isTesting || Helper.enableReleaseLog) Log.e("AdmobUtils", msg)
     }
 
-    private fun Context.adOrg() = prefs().getBoolean("ads_ref_event", true) && !isTesting && Helper.settings()?.get("ads_enable")?.asString == "2"
+    private fun Context.adOrg() =
+        prefs().getBoolean("is_are", true) && !isTesting && Helper.settings()
+            ?.get("ads_enable")?.asString == "2"
 //    private fun Context.adOrg() = prefs().getBoolean("ads_ref_event", true) && Helper.settings()?.get("ads_enable")?.asString == "2"
 
     abstract class InterCallback {
