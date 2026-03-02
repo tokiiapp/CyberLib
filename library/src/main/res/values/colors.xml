@@ -13,7 +13,7 @@
     <color name="native_body_color">#252525</color>
     <color name="color_native_install_button_text">#FFFFFF</color>
     <color name="dialog_no_internet_text_color">#333333</color>
-
+    <color name="color_title_language">#000000</color>
     <color name="color_item_language_unselected">#212121</color>
     <color name="color_item_language_selected">#333333</color>
     <color name="color_background_intro">#FFFFFF</color>
