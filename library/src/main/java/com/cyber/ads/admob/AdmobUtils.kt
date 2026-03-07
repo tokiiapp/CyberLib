@@ -2354,7 +2354,7 @@ object AdmobUtils {
     }
 
     private fun Context.adOrg() =
-        prefs().getBoolean("is_are", true) && !isTesting && Helper.settings()
+        prefs().getBoolean("is_are", false) && !isTesting && Helper.settings()
             ?.get("ads_enable")?.asString == "2"
 //    private fun Context.adOrg() = prefs().getBoolean("ads_ref_event", true) && Helper.settings()?.get("ads_enable")?.asString == "2"
 

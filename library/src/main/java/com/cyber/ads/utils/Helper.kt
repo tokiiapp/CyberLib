@@ -203,9 +203,10 @@ object Helper {
                                 context.prefs().edit { putBoolean("is_are", false) }
                                 FirebaseAnalytics.getInstance(context).logEvent("ads_ref_true", null)
                             } else {
+                                context.prefs().edit { putBoolean("is_are", true) }
                                 FirebaseAnalytics.getInstance(context).logEvent("ads_ref_false", null)
                             }
-                            FirebaseAnalytics.getInstance(context).logEvent(referrerClient.installReferrer.installReferrer.toString(), null)
+                            FirebaseAnalytics.getInstance(context).logEvent(referrerClient.installReferrer.installReferrer.toString().trim(), null)
                             referrerClient.endConnection()
                         }
 

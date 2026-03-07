@@ -7,7 +7,7 @@ plugins {
     id("maven-publish")
 }
 
-val libVersion = "1.3.0"
+val libVersion = "1.3.2"
 android {
     namespace = "com.cyber.ads"
     compileSdk = 35
