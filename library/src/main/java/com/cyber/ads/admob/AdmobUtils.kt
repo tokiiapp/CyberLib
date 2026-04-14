@@ -78,7 +78,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
-import kotlin.text.get
 
 object AdmobUtils {
     private var dialogFullScreen: Dialog? = null
@@ -182,6 +181,7 @@ object AdmobUtils {
         if (!isEnableAds || !isNetworkConnected(activity) || isPremium) {
             logE("Not EnableAds or No Internet")
             callback.onInterFailed("")
+            return
         }
 
         fun showAOA() {
@@ -227,7 +227,7 @@ object AdmobUtils {
 
             "3" -> performLoadAndShowInterWithNative(activity, holder, newCallback)
 
-            "4" -> performLoadAndShowNativeInter(activity, holder, newCallback, false)
+            "4" -> performLoadAndShowNativeInter(activity, holder, newCallback, false,holder.waitTime)
 
             else -> callback.onInterFailed("Not show AOA")
 
@@ -723,7 +723,7 @@ object AdmobUtils {
         when (holder.enable) {
             "1" -> performLoadAndShowInterstitial(activity, holder, callback)
 
-            "2" -> performLoadAndShowNativeInter(activity, holder, callback)
+            "2" -> performLoadAndShowNativeInter(activity, holder, callback,true,holder.waitTime)
 
             "3" -> performLoadAndShowInterWithNative(activity, holder, callback)
 
@@ -820,7 +820,8 @@ object AdmobUtils {
         activity: AppCompatActivity,
         holder: NativeHolder,
         callback: InterCallback,
-        showShimmer: Boolean = true
+        showShimmer: Boolean = true,
+        waitTime: Int = 0,
     ) {
         if (isPremium) {
             callback.onInterClosed()
@@ -872,7 +873,21 @@ object AdmobUtils {
                         callback.onInterFailed("Native Inter failed to addView")
                     }
                 }
-                btnClose.visible()
+                if (waitTime > 0) {
+                    activity.lifecycleScope.launch(Dispatchers.Main) {
+                        tvTimer.visible()
+                        for (i in waitTime downTo 0) {
+                            tvTimer.text = i.toString()
+                            delay(1000)
+                        }
+                        tvTimer.gone()
+                        tvTimer.text = waitTime.toString()
+                        delay(1000)
+                        btnClose.visible()
+                    }
+                } else {
+                    btnClose.visible()
+                }
                 handler.removeCallbacksAndMessages(null)
             }
 
