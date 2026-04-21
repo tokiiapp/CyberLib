@@ -2085,7 +2085,7 @@ object AdmobUtils {
                 }
                 if (!isNativeInterShowing(activity)) {
                     decorView.addView(adViewCollap, layoutParams)
-                    val adViewSmall = activity.layoutInflater.inflate(R.layout.native_template_tiny1, null) as NativeAdView
+                    val adViewSmall = activity.layoutInflater.inflate(R.layout.native_collapp_tiny, null) as NativeAdView
                     populateNativeAdView(nativeAd, adViewSmall)
                     viewGroup.addView(adViewSmall)
                     postRefreshDelayed(activity, holder) {

@@ -9,6 +9,7 @@
     <color name="native_button_color">#2196F3</color>
     <color name="native_ad_badge_color">#3F51B5</color>
     <color name="native_bg_color">#F6F6F6</color>
+    <color name="native_collap_bg_color">#F6F6F6</color>
     <color name="native_headline_color">#000000</color>
     <color name="native_body_color">#252525</color>
     <color name="color_native_install_button_text">#FFFFFF</color>
