@@ -49,37 +49,37 @@ class NativeHelper {
             }
             if (nativeAd.mediaContent != null) {
                 if (adView.mediaView?.isVisible == true) {
-                    adView.mediaView!!.mediaContent = nativeAd.mediaContent!!
+                    adView.mediaView?.mediaContent = nativeAd.mediaContent!!
 //                } else {
 //                    adView.mediaView?.gone()
                 }
             }
 
             if (nativeAd.headline != null) {
-                (adView.headlineView as TextView).text = nativeAd.headline
+                (adView.headlineView as? TextView)?.text = nativeAd.headline
             }
             if (nativeAd.body == null) {
-                adView.bodyView!!.visibility = View.INVISIBLE
+                adView.bodyView?.visibility = View.INVISIBLE
             } else {
-                adView.bodyView!!.visibility = View.VISIBLE
-                (adView.bodyView as TextView).text = nativeAd.body
+                adView.bodyView?.visibility = View.VISIBLE
+                (adView.bodyView as? TextView)?.text = nativeAd.body
             }
             if (nativeAd.callToAction == null) {
-                adView.callToActionView!!.visibility = View.INVISIBLE
+                adView.callToActionView?.visibility = View.INVISIBLE
 
             } else {
-                adView.callToActionView!!.visibility = View.VISIBLE
-                (adView.callToActionView as Button).text = nativeAd.callToAction
+                adView.callToActionView?.visibility = View.VISIBLE
+                (adView.callToActionView as? Button)?.text = nativeAd.callToAction
             }
 
             if (adView.iconView != null) {
                 if (nativeAd.icon == null) {
                     adView.iconView!!.visibility = View.GONE
                 } else {
-                    (adView.iconView as ImageView).setImageDrawable(
-                        nativeAd.icon!!.drawable
+                    (adView.iconView as? ImageView)?.setImageDrawable(
+                        nativeAd.icon?.drawable
                     )
-                    adView.iconView!!.visibility = View.VISIBLE
+                    adView.iconView?.visibility = View.VISIBLE
                 }
             }
 

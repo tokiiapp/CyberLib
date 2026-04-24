@@ -5,11 +5,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import com.cyber.ads.admob.AdmobUtils
 import com.cyber.ads.admob.RemoteUtils
+import com.cyber.ads.custom.LoadingSize
 import com.cyber.ads.utils.addActivity
 import com.cyber.ads.utils.log
 import com.cyber.ads.utils.prefs
 import com.cyber.ads.utils.setupInAppUpdate
 import com.cyber.ads.utils.toast
+import com.cyber.sample.R
 import com.cyber.sample.RemoteConfig
 import com.cyber.sample.databinding.ActivityMainBinding
 
@@ -84,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnLoadShowNative.setOnClickListener {
-            AdmobUtils.loadAndShowNative(this, RemoteConfig.NATIVE_HOME.anchorTop(), binding.flNative, object : AdmobUtils.NativeCallback() {})
+            AdmobUtils.loadAndShowNative(this, RemoteConfig.NATIVE_HOME.customLayout(R.layout.native_custom, LoadingSize.SMALL), binding.flNative, object : AdmobUtils.NativeCallback() {})
         }
 
         binding.btnLoadShowNativeCollapTop.setOnClickListener {
